@@ -70,9 +70,9 @@ app = Flask(__name__)
 # Each key in the dictionary is a command
 # The value is the help message sent for the command
 commands = {
-	"/title": "Followed by case number will get the case title.",
     "/echo": "Reply back with the same message sent.",
-    "/help": "Get help."
+    "/help": "Get help.",
+	"/test": "Print test message."
 }
 
 
@@ -219,6 +219,8 @@ def process_incoming_message(post_data):
         reply = send_help(post_data)
     elif command in ["/echo"]:
         reply = send_echo(message)
+	elif command in ["/test"]:
+		reply = send_test()
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -238,6 +240,11 @@ def send_help(post_data):
     for c in commands.items():
         message = message + "* **%s**: %s \n" % (c[0], c[1])
     return message
+
+# Test command function that prints a test string
+def send_test():
+	message = "This is a test message."
+	return message
 
 
 # Return contents following a given command
