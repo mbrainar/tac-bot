@@ -70,6 +70,7 @@ app = Flask(__name__)
 # Each key in the dictionary is a command
 # The value is the help message sent for the command
 commands = {
+	"/title": "Followed by case number will get the case title.",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help."
 }
