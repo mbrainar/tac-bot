@@ -219,8 +219,8 @@ def process_incoming_message(post_data):
         reply = send_help(post_data)
     elif command in ["/echo"]:
         reply = send_echo(message)
-	elif command in ["/test"]:
-		reply = send_test()
+    elif command in ["/test"]:
+        reply = send_test()
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
