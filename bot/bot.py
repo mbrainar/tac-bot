@@ -232,6 +232,8 @@ def process_incoming_message(post_data):
 # Command function that returns TAC case title for provided case number
 def send_title(incoming):
     val = extract_message("/title", incoming.text)
+    return val
+    '''
     try:
         case_number = int(val)
     except ValueError:
@@ -251,6 +253,7 @@ def send_title(incoming):
         return response.json()['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
     else:
         response.raise_for_status()
+    '''
 
 # Sample command function that just echos back the sent message
 def send_echo(incoming):
