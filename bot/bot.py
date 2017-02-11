@@ -231,12 +231,26 @@ def process_incoming_message(post_data):
 
 # Command function that returns TAC case title for provided case number
 def send_title(incoming):
+    val = extract_message("/title", incoming.text)
     try:
-        val = int(incoming)
+        case_number = int(val)
     except ValueError:
         message = "Sorry, That is not a case number"
     access_token = get_access_token()
-    return access_token
+
+    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
+    access_token = get_access_token()
+    headers = {
+        'authorization': "Bearer " + access_token,
+        'cache-control': "no-cache"
+    }
+
+    response = requests.request("GET", url, headers=headers)
+
+    if (response.status_code == 200):
+        return response.json()['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
+    else:
+        response.raise_for_status()
 
 # Sample command function that just echos back the sent message
 def send_echo(incoming):
