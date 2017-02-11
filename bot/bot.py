@@ -61,6 +61,7 @@ from ciscosparkapi import CiscoSparkAPI
 import os
 import sys
 import json
+import requests
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
@@ -70,6 +71,7 @@ app = Flask(__name__)
 # Each key in the dictionary is a command
 # The value is the help message sent for the command
 commands = {
+    "/title": "Get title for TAC case number provided",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
 	"/test": "Print test message."
@@ -221,10 +223,20 @@ def process_incoming_message(post_data):
         reply = send_echo(message)
     elif command in ["/test"]:
         reply = send_test()
+    elif command in ["/title"]:
+        reply = send_title(message)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
 
+# Command function that returns TAC case title for provided case number
+def send_title(incoming):
+    try:
+        val = int(incoming)
+    except ValueError:
+        message = "Sorry, That is not a case number"
+    access_token = get_access_token()
+    return access_token
 
 # Sample command function that just echos back the sent message
 def send_echo(incoming):
@@ -243,8 +255,8 @@ def send_help(post_data):
 
 # Test command function that prints a test string
 def send_test():
-	message = "This is a test message."
-	return message
+    message = "This is a test message."
+    return message
 
 
 # Return contents following a given command
@@ -253,6 +265,23 @@ def extract_message(command, text):
     message = text[cmd_loc + len(command):]
     return message
 
+# Get access-token for Case API
+def get_access_token():
+    client_id = os.environ.get("CASE_API_CLIENT_ID")
+    client_secret = os.environ.get("CASE_API_CLIENT_SECRET")
+    grant_type = "client_credentials"
+    url = "https://cloudsso.cisco.com/as/token.oauth2"
+    payload = "client_id="+client_id+"&grant_type=client_credentials&client_secret="+client_secret
+    headers = {
+        'accept': "application/json",
+        'content-type': "application/x-www-form-urlencoded",
+        'cache-control': "no-cache"
+    }
+    response = requests.request("POST", url, data=payload, headers=headers)
+    if (response.status_code == 200):
+        return response.json()['access_token']
+    else:
+        response.raise_for_status()
 
 # Setup the Spark connection and WebHook
 def spark_setup(email, token):

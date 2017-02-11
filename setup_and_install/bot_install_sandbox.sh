@@ -31,6 +31,13 @@ echo
 echo "What is the token for your bot?  "
 read -s bot_token
 echo
+echo "You will need access to the CASE API from http://apiconsole.cisco.com"
+echo "What is the client_id for your app?"
+read client_id
+echo
+echo "What is the client_secret?"
+read -s client_secret
+echo
 echo "Your bot will be deployed based on the 'latest' tag of Docker Container at: "
 echo "    https://hub.docker.com/r/$docker_username/$bot_name/"
 echo "Is this correct?  yes/no"
@@ -52,6 +59,8 @@ sed -i "" -e "s/BOTNAME/$bot_name/g" $docker_username-$bot_name-sandbox.json
 #sed -i "" -e "s/BOTEMAIL/$bot_email/g" $docker_username-$bot_name-sandbox.json
 #sed -i "" -e "s/BOTTOKEN/$bot_token/g" $docker_username-$bot_name-sandbox.json
 sed -i "" -e "s/APPDOMAIN/$mantl_domain/g" $docker_username-$bot_name-sandbox.json
+sed -i "" -e "s/CLIENTID/$client_id/g" $docker_username-$bot_name-sandbox.json
+sed -i "" -e "s/CLIENTSECRET/$client_secret/g" $docker_username-$bot_name-sandbox.json
 
 if [ $TAG != "" ]
 then
