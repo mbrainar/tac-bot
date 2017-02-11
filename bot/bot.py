@@ -193,8 +193,8 @@ def process_incoming_message(post_data):
     message_id = post_data["data"]["id"]
     message = spark.messages.get(message_id)
     # Uncomment to debug
-    # sys.stderr.write("Message content:" + "\n")
-    # sys.stderr.write(str(message) + "\n")
+     sys.stderr.write("Message content:" + "\n")
+     sys.stderr.write(str(message) + "\n")
 
     # First make sure not processing a message from the bot
     if message.personEmail in spark.people.me().emails:
