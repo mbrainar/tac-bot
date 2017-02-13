@@ -72,7 +72,8 @@ app = Flask(__name__)
 # Each key in the dictionary is a command
 # The value is the help message sent for the command
 commands = {
-    "/title": "Get title for TAC case number provided",
+    "/title": "Get title for TAC case number provided, if none provided will look for one in room name.",
+    "/owner": "Get case owner for TAC case number provided, if none provided will look for one in room name.",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
 	"/test": "Print test message."
@@ -159,6 +160,8 @@ def health_check():
     """
     return "Up and healthy"
 
+# REST API for room creation
+
 
 # Function to Setup the WebHook for the bot
 def setup_webhook(name, targeturl):
@@ -226,6 +229,8 @@ def process_incoming_message(post_data):
         reply = send_test()
     elif command in ["/title"]:
         reply = send_title(post_data)
+    elif command in ["/owner"]:
+        reply = send_owner(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -262,6 +267,40 @@ def send_title(post_data):
             message = "Sorry, no case number was found."
 
     return message
+
+# Command function that returns the owner of the TAC case number provided
+def send_owner(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message = spark.messages.get(message_id)
+    content = extract_message("/owner", message.text)
+
+    # Check if case number is found in message
+    case_number = get_case_number(content)
+    if case_number:
+        case_owner = get_case_owner(case_number)
+        if case_owner:
+            message = "Case owner for SR "+str(case_number)+" is: "+case_owner
+        else:
+            message = "No case found with SR "+case_number
+    else:
+        # If case number not provided in message, use room name
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            case_owner = get_case_owner(case_number)
+            if case_owner:
+                message = "Case owner for SR "+str(case_number)+" is: "+case_owner
+            else:
+                message = "No case found with SR "+str(case_number)
+        else:
+            message = "Sorry, no case number was found."
+
+    return message
+
 
 # Sample command function that just echos back the sent message
 def send_echo(incoming):
@@ -329,6 +368,29 @@ def get_case_title(case_number):
             return title
         else:
             return False
+
+# Get case owner from CASE API
+def get_case_owner(case_number):
+    access_token = get_access_token()
+
+    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
+    headers = {
+        'authorization': "Bearer " + access_token,
+        'cache-control': "no-cache"
+    }
+    response = requests.request("GET", url, headers=headers)
+
+    if (response.status_code == 200):
+        # Uncomment to debug
+        # sys.stderr.write(response.text)
+
+        # Check if case was found
+        if response.json()['RESPONSE']['COUNT'] == 1:
+            owner = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
+            return owner
+        else:
+            return False
+
 
 # Get room name
 def get_room_name(room_id):
