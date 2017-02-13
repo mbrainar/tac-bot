@@ -62,6 +62,7 @@ import os
 import sys
 import json
 import requests
+import re
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
@@ -193,8 +194,8 @@ def process_incoming_message(post_data):
     message_id = post_data["data"]["id"]
     message = spark.messages.get(message_id)
     # Uncomment to debug
-     sys.stderr.write("Message content:" + "\n")
-     sys.stderr.write(str(message) + "\n")
+    # sys.stderr.write("Message content:" + "\n")
+    # sys.stderr.write(str(message) + "\n")
 
     # First make sure not processing a message from the bot
     if message.personEmail in spark.people.me().emails:
@@ -224,36 +225,43 @@ def process_incoming_message(post_data):
     elif command in ["/test"]:
         reply = send_test()
     elif command in ["/title"]:
-        reply = send_title(message)
+        reply = send_title(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
 
 # Command function that returns TAC case title for provided case number
-def send_title(incoming):
-    val = extract_message("/title", incoming.text)
-    return val
-    '''
-    try:
-        case_number = int(val)
-    except ValueError:
-        message = "Sorry, That is not a case number"
-    access_token = get_access_token()
+def send_title(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
 
-    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
-    access_token = get_access_token()
-    headers = {
-        'authorization': "Bearer " + access_token,
-        'cache-control': "no-cache"
-    }
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message = spark.messages.get(message_id)
+    content = extract_message("/title", message.text)
 
-    response = requests.request("GET", url, headers=headers)
-
-    if (response.status_code == 200):
-        return response.json()['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
+    # Check if case number is found in message
+    case_number = get_case_number(content)
+    if case_number:
+        case_title = get_case_title(case_number)
+        if case_title:
+            message = "Title for SR "+str(case_number)+" is: "+case_title
+        else:
+            message = "No case found with SR "+case_number
     else:
-        response.raise_for_status()
-    '''
+        # If case number not provided in message, use room name
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:        
+            case_title = get_case_title(case_number)
+            if case_title:
+                message = "Title for SR "+str(case_number)+" is: "+case_title
+            else:
+                message = "No case found with SR "+str(case_number)
+        else:
+            message = "Sorry, no case number was found."
+
+    return message
 
 # Sample command function that just echos back the sent message
 def send_echo(incoming):
@@ -275,7 +283,7 @@ def send_test():
     message = "This is a test message."
     return message
 
-
+# Supporting functions
 # Return contents following a given command
 def extract_message(command, text):
     cmd_loc = text.find(command)
@@ -299,6 +307,58 @@ def get_access_token():
         return response.json()['access_token']
     else:
         response.raise_for_status()
+
+# Get case title from CASE API
+def get_case_title(case_number):
+    access_token = get_access_token()
+
+    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
+    headers = {
+        'authorization': "Bearer " + access_token,
+        'cache-control': "no-cache"
+    }
+    response = requests.request("GET", url, headers=headers)
+
+    if (response.status_code == 200):
+        # Uncomment to debug
+        # sys.stderr.write(response.text)
+
+        # Check if case was found
+        if response.json()['RESPONSE']['COUNT'] == 1:
+            title = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
+            return title
+        else:
+            return False
+
+# Get room name
+def get_room_name(room_id):
+    url = "https://api.ciscospark.com/v1/rooms/"+room_id
+
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()["spark_token"],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("GET", url, headers=headers)
+    if (response.status_code == 200):
+        return response.json()['title']
+    else:
+        response.raise_for_status()
+
+# Match case number in string
+def get_case_number(content):
+    # Check if there is a case number in the incoming message content
+    pattern = re.compile("([0-9]{9})")
+    match = pattern.search(content)
+
+    if match:
+        case_number = match.group(0)
+        return case_number
+    else:
+        return False
+
+
 
 # Setup the Spark connection and WebHook
 def spark_setup(email, token):
