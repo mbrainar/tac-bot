@@ -386,8 +386,12 @@ def get_case_owner(case_number):
 
         # Check if case was found
         if response.json()['RESPONSE']['COUNT'] == 1:
-            owner = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
-            return owner
+            owner_id = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
+            owner_first_name = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
+            owner_last_name = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
+            owner_email = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
+            owner_string = owner_first_name+" "+owner_last_name+" ("+owner_email+")"
+            return owner_string
         else:
             return False
 
