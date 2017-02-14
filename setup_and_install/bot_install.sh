@@ -64,8 +64,8 @@ sed -i "" -e "s/DOCKERREPO/$docker_repo/g" $docker_username-$bot_name.json
 sed -i "" -e "s/DEPLOYMENTDIR/$deployment_dir/g" $docker_username-$bot_name.json
 sed -i "" -e "s/USERNAME/$docker_username/g" $docker_username-$bot_name.json
 sed -i "" -e "s/BOTNAME/$bot_name/g" $docker_username-$bot_name.json
-#sed -i "" -e "s/BOTEMAIL/$bot_email/g" $docker_username-$bot_name.json
-#sed -i "" -e "s/BOTTOKEN/$bot_token/g" $docker_username-$bot_name.json
+sed -i "" -e "s/BOTEMAIL/$bot_email/g" $docker_username-$bot_name.json
+sed -i "" -e "s/BOTTOKEN/$bot_token/g" $docker_username-$bot_name.json
 sed -i "" -e "s/APPDOMAIN/$mantl_domain/g" $docker_username-$bot_name.json
 sed -i "" -e "s/CLIENTID/$client_id/g" $docker_username-$bot_name.json
 sed -i "" -e "s/CLIENTSECRET/$client_secret/g" $docker_username-$bot_name.json
@@ -107,12 +107,13 @@ do
 done
 echo
 
-echo "Bot is up.  Configuring Spark."
-echo "Bot Configuration: "
-curl -X POST $BOT_URL/config \
-    -d "{\"SPARK_BOT_TOKEN\": \"$bot_token\", \"SPARK_BOT_EMAIL\": \"$bot_email\"}"
-echo
-echo
+# Not needed when configuring spark bot_email and bot_token as environment variables
+#echo "Bot is up.  Configuring Spark."
+#echo "Bot Configuration: "
+#curl -X POST $BOT_URL/config \
+    #-d "{\"SPARK_BOT_TOKEN\": \"$bot_token\", \"SPARK_BOT_EMAIL\": \"$bot_email\"}"
+#echo
+#echo
 
 echo "Your bot is deployed to "
 echo
