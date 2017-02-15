@@ -161,6 +161,19 @@ def health_check():
     return "Up and healthy"
 
 # REST API for room creation
+@app.route("/create/<case_number>/<email>", methods=["GET"])
+def create(case_number, email):
+    """
+    Kickoff a 1 on 1 chat with a given email
+    :param email:
+    :return:
+    """
+    # Check if the Spark connection has been made
+    if spark is None:
+        sys.stderr.write("Bot not ready.  \n")
+        return "Spark Bot not ready.  "
+
+    return create_room(case_number)
 
 
 # Function to Setup the WebHook for the bot
@@ -395,7 +408,6 @@ def get_case_owner(case_number):
         else:
             return False
 
-
 # Get room name
 def get_room_name(room_id):
     url = "https://api.ciscospark.com/v1/rooms/"+room_id
@@ -424,6 +436,29 @@ def get_case_number(content):
     else:
         return False
 
+# Create Spark Room
+def create_room(case_number):
+    case_title = get_case_title(case_number)
+    if case_title:
+        data = { "\"title\"": "\"SR "+str(case_number)+"\: "+case_title+"\"" }
+    else:
+        data = {
+            "title": "SR "+str(case_number)
+            }
+        
+    url = "https://api.ciscospark.com/v1/rooms"
+
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()["spark_token"],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("POST", url, headers=headers, data=data)
+    if (response.status_code == 200):
+        return response.json()['id']
+    else:
+        response.raise_for_status()
 
 
 # Setup the Spark connection and WebHook
