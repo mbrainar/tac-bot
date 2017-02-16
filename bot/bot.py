@@ -173,7 +173,25 @@ def create(case_number, email):
         sys.stderr.write("Bot not ready.  \n")
         return "Spark Bot not ready.  "
 
-    return create_room(case_number)
+    new_room_id = create_room(case_number)
+    sys.stderr.write("Created room id: "+new_room_id+"\n")
+    person_id = get_person_id(email)
+    sys.stderr.write("Person ID for email ("+email+"): "+person_id+"\n")
+
+    membership = get_membership(new_room_id)
+    member_id = False
+    for member in membership['items']:
+        if member['personId'] == person_id:
+            membership_id = member['id']
+            sys.stderr.write(email+" already found in room; membershipId: "+membership_id)
+            break
+    if not member_id:
+        membership_id = create_membership(person_id, new_room_id)
+        sys.stderr.write(email+" added to room; membershipId: "+membership_id)
+    
+    return "Created room id: "+new_room_id+"\n \
+Person ID for email ("+email+"): "+person_id+"\n \
+Membership ID: "+membership_id+"\n"
 
 
 # Function to Setup the WebHook for the bot
@@ -440,13 +458,61 @@ def get_case_number(content):
 def create_room(case_number):
     case_title = get_case_title(case_number)
     if case_title:
-        data = { "\"title\"": "\"SR "+str(case_number)+"\: "+case_title+"\"" }
+        data = "{ \"title\": \"SR "+case_number+": "+case_title+"\" }"
     else:
-        data = {
-            "title": "SR "+str(case_number)
-            }
+        data = "{ \"title\": \"SR "+case_number+"\" }"
         
     url = "https://api.ciscospark.com/v1/rooms"
+
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()["spark_token"],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("POST", url, headers=headers, data=data)
+    if (response.status_code == 200):
+        return response.json()['id']
+    else:
+        response.raise_for_status()
+
+# Get room membership
+def get_membership(room_id):
+    url = "https://api.ciscospark.com/v1/memberships?roomId="+room_id
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()["spark_token"],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("GET", url, headers=headers)
+    if (response.status_code == 200):
+        return response.json()
+    else:
+        response.raise_for_status()
+
+
+# Get person_id for email address
+def get_person_id(email):
+    url = "https://api.ciscospark.com/v1/people?email="+email
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()["spark_token"],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("GET", url, headers=headers)
+    if (response.status_code == 200):
+        return response.json()['items'][0]['id']
+    else:
+        response.raise_for_status()
+
+
+# Create membership
+def create_membership(person_id, new_room_id):
+    data = "{ \"roomId\": \""+new_room_id+"\", \"personId\": \""+person_id+"\" }"
+
+    url = "https://api.ciscospark.com/v1/memberships"
 
     headers = {
         'content-type': "application/json",
