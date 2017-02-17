@@ -1,6 +1,5 @@
 #! /usr/bin/python
 """
-    boilerplate_sparkbot
 
     This is a sample boilerplate application that provides the framework to quickly
     build and deploy an interactive Spark Bot.
