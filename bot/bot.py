@@ -173,25 +173,43 @@ def create(case_number, email):
         sys.stderr.write("Bot not ready.  \n")
         return "Spark Bot not ready.  "
 
-    new_room_id = create_room(case_number)
-    sys.stderr.write("Created room id: "+new_room_id+"\n")
-    person_id = get_person_id(email)
-    sys.stderr.write("Person ID for email ("+email+"): "+person_id+"\n")
-
-    membership = get_membership(new_room_id)
-    member_id = False
-    for member in membership['items']:
-        if member['personId'] == person_id:
-            membership_id = member['id']
-            sys.stderr.write(email+" already found in room; membershipId: "+membership_id)
-            break
-    if not member_id:
-        membership_id = create_membership(person_id, new_room_id)
-        sys.stderr.write(email+" added to room; membershipId: "+membership_id)
+    # Check if case number
+    #case_number = get_case_number(case_number)
     
-    return "Created room id: "+new_room_id+"\n \
-Person ID for email ("+email+"): "+person_id+"\n \
-Membership ID: "+membership_id+"\n"
+    # Get person ID for email provided
+    person_id = get_person_id(email)
+    #sys.stderr.write("Person ID for email ("+email+"): "+person_id+"\n")
+
+    # Check if room already exists for case and  user
+    room_id = room_exists_for_user(case_number, email)
+    if room_id:
+        message = "Room already exists for "+email+" for "+case_number+"; roomId "+room_id+"\n"
+        sys.stderr.write("Room already exists for "+email+" for "+case_number+"; roomId "+room_id)
+    else:
+        # Create the new room
+        room_id = create_room(case_number)
+        message = "Created room id: "+room_id+"\n"
+        sys.stderr.write("Created room id: "+room_id+"\n")
+
+        # Check if user is already part of room
+        membership = get_membership(room_id)
+        member_id = False
+        for member in membership['items']:
+            if member['personId'] == person_id:
+                membership_id = member['id']
+                message = message+email+" already found in room; membershipId: "+membership_id+"\n"
+                sys.stderr.write(email+" already found in room; membershipId: "+membership_id)
+                break
+        if not member_id:
+            membership_id = create_membership(person_id, room_id)
+            message = message+email+" added to room; membershipId: "+membership_id+"\n"
+            sys.stderr.write(email+" added to room; membershipId: "+membership_id)
+    
+    # Print Welcome message to room
+    spark.messages.create(roomId=room_id, markdown=send_help(False))
+    message = message+"Welcome message with command help sent to room\n"
+    
+    return message
 
 
 # Function to Setup the WebHook for the bot
@@ -426,6 +444,24 @@ def get_case_owner(case_number):
         else:
             return False
 
+# Get all rooms name matching case number
+def get_rooms(case_number):
+    url = "https://api.ciscospark.com/v1/rooms/"
+
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()['spark_token'],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("GET", url, headers=headers)
+
+    if (response.status_code == 200):
+        test = [x for x in response.json()['items'] if str(case_number) in x['title']]
+        return test
+    else:
+        response.raise_for_status()
+
 # Get room name
 def get_room_name(room_id):
     url = "https://api.ciscospark.com/v1/rooms/"+room_id
@@ -525,6 +561,18 @@ def create_membership(person_id, new_room_id):
         return response.json()['id']
     else:
         response.raise_for_status()
+
+# Check if room already exists for case and  user
+def room_exists_for_user(case_number, email):
+    person_id = get_person_id(email)
+    rooms = get_rooms(case_number)
+    for r in rooms:
+        room_memberships = get_membership(r['id'])
+        for m in room_memberships['items']:
+            if m['personId'] == person_id:
+                return r['id']
+            else:
+                continue
 
 
 # Setup the Spark connection and WebHook
