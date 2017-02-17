@@ -319,7 +319,7 @@ def send_help(post_data):
 
 # Test command function that prints a test string
 def send_test():
-    message = "This is a test message."
+    message = "This is an old test message."
     return message
 
 # Supporting functions
