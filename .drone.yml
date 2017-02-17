@@ -22,6 +22,20 @@ deploy:
       password: $$MANTL_PASSWORD
     urls:
       - https://$$MANTL_CONTROL/marathon/v2/apps/$$DEPLOYMENT_DIR/$$BOT_NAME/$$DOCKER_USERNAME/restart?force=true
+    when:
+      branch: "master"
+
+  webhook:
+    image: plugins/drone-webhook
+    skip_verify: true
+    method: POST
+    auth:
+      username: $$MANTL_USERNAME
+      password: $$MANTL_PASSWORD
+    urls:
+      - https://$$MANTL_CONTROL/marathon/v2/apps/$$DEPLOYMENT_DIR/$$BOT_NAME-dev/$$DOCKER_USERNAME/restart?force=true
+    when:
+      branch: "dev"
 
 
 notify:
