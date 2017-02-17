@@ -532,18 +532,34 @@ def get_membership(room_id):
 
 # Get person_id for email address
 def get_person_id(email):
-    url = "https://api.ciscospark.com/v1/people?email="+email
-    headers = {
-        'content-type': "application/json",
-        'authorization': "Bearer "+globals()["spark_token"],
-        'cache-control': "no-cache"
-        }
-
-    response = requests.request("GET", url, headers=headers)
-    if (response.status_code == 200):
-        return response.json()['items'][0]['id']
+    if check_email_syntax(email):
+        url = "https://api.ciscospark.com/v1/people?email="+email
+        headers = {
+            'content-type': "application/json",
+            'authorization': "Bearer "+globals()["spark_token"],
+            'cache-control': "no-cache"
+            }
+    
+        response = requests.request("GET", url, headers=headers)
+        if (response.status_code == 200):
+            if response.json()['items']:
+                return response.json()['items'][0]['id']
+            else:
+                return False
+        else:
+            response.raise_for_status()
     else:
-        response.raise_for_status()
+        return False
+
+
+# Check if email is syntactically correct
+def check_email_syntax(content):
+    pattern = re.compile("^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
+
+    if pattern.match(content):
+        return True
+    else:
+        return False
 
 
 # Create membership
