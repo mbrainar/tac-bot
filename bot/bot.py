@@ -160,8 +160,8 @@ def health_check():
     return "Up and healthy"
 
 # REST API for room creation
-@app.route("/create/<case_number>/<email>", methods=["GET"])
-def create(case_number, email):
+@app.route("/create/<provided_case_number>/<email>", methods=["GET"])
+def create(provided_case_number, email):
     """
     Kickoff a 1 on 1 chat with a given email
     :param email:
@@ -172,41 +172,44 @@ def create(case_number, email):
         sys.stderr.write("Bot not ready.  \n")
         return "Spark Bot not ready.  "
 
-    # Check if case number
-    #case_number = get_case_number(case_number)
-    
-    # Get person ID for email provided
-    person_id = get_person_id(email)
-    #sys.stderr.write("Person ID for email ("+email+"): "+person_id+"\n")
+    # Check if provided case number is valid
+    case_number = get_case_number(provided_case_number)
+    if case_number:
+        # Get person ID for email provided
+        person_id = get_person_id(email)
+        if person_id:
+            #sys.stderr.write("Person ID for email ("+email+"): "+person_id+"\n")
 
-    # Check if room already exists for case and  user
-    room_id = room_exists_for_user(case_number, email)
-    if room_id:
-        message = "Room already exists for "+email+" for "+case_number+"; roomId "+room_id+"\n"
-        sys.stderr.write("Room already exists for "+email+" for "+case_number+"; roomId "+room_id)
-    else:
-        # Create the new room
-        room_id = create_room(case_number)
-        message = "Created room id: "+room_id+"\n"
-        sys.stderr.write("Created room id: "+room_id+"\n")
-
-        # Check if user is already part of room
-        membership = get_membership(room_id)
-        member_id = False
-        for member in membership['items']:
-            if member['personId'] == person_id:
-                membership_id = member['id']
-                message = message+email+" already found in room; membershipId: "+membership_id+"\n"
-                sys.stderr.write(email+" already found in room; membershipId: "+membership_id)
-                break
-        if not member_id:
-            membership_id = create_membership(person_id, room_id)
-            message = message+email+" added to room; membershipId: "+membership_id+"\n"
-            sys.stderr.write(email+" added to room; membershipId: "+membership_id)
-    
-    # Print Welcome message to room
-    spark.messages.create(roomId=room_id, markdown=send_help(False))
-    message = message+"Welcome message with command help sent to room\n"
+            # Check if room already exists for case and  user
+            room_id = room_exists_for_user(case_number, email)
+            if room_id:
+                message = "Room already exists with  "+case_number+" in the title and "+email+" already a member.\n"
+                sys.stderr.write(message)
+                sys.stderr.write("roomId: "+room_id+"\n")
+            else:
+                # Create the new room
+                room_id = create_room(case_number)
+                message = "Created roomId: "+room_id+"\n"
+                sys.stderr.write(message)
+        
+                # Add user to the room
+                membership_id = create_membership(person_id, room_id)
+                membership_message = email+" added to the room.\n"
+                sys.stderr.write(member_message)
+                sys.stderr.write("membershipId: "+membership_id)
+                message = message+membership_message
+        
+            # Print Welcome message to room
+            spark.messages.create(roomId=room_id, markdown=send_help(False))
+            welcome_message = "Welcome message (with help command) sent to the room.\n"
+            sys.stderr.write(welcome_message)
+            message = message+welcome_message
+        else:
+            message = "No user found with the email address: "+email
+            sys.stderr.write(message)
+    else: 
+        message = provided_case_number+" is not a valid case number"
+        sys.stderr.write(message)
     
     return message
 
