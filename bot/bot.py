@@ -1,6 +1,5 @@
 #! /usr/bin/python
 """
-    boilerplate_sparkbot
 
     This is a sample boilerplate application that provides the framework to quickly
     build and deploy an interactive Spark Bot.
@@ -161,6 +160,58 @@ def health_check():
     return "Up and healthy"
 
 # REST API for room creation
+@app.route("/create/<provided_case_number>/<email>", methods=["GET"])
+def create(provided_case_number, email):
+    """
+    Kickoff a 1 on 1 chat with a given email
+    :param email:
+    :return:
+    """
+    # Check if the Spark connection has been made
+    if spark is None:
+        sys.stderr.write("Bot not ready.  \n")
+        return "Spark Bot not ready.  "
+
+    # Check if provided case number is valid
+    case_number = get_case_number(provided_case_number)
+    if case_number:
+        # Get person ID for email provided
+        person_id = get_person_id(email)
+        if person_id:
+            #sys.stderr.write("Person ID for email ("+email+"): "+person_id+"\n")
+
+            # Check if room already exists for case and  user
+            room_id = room_exists_for_user(case_number, email)
+            if room_id:
+                message = "Room already exists with  "+case_number+" in the title and "+email+" already a member.\n"
+                sys.stderr.write(message)
+                sys.stderr.write("roomId: "+room_id+"\n")
+            else:
+                # Create the new room
+                room_id = create_room(case_number)
+                message = "Created roomId: "+room_id+"\n"
+                sys.stderr.write(message)
+        
+                # Add user to the room
+                membership_id = create_membership(person_id, room_id)
+                membership_message = email+" added to the room.\n"
+                sys.stderr.write(member_message)
+                sys.stderr.write("membershipId: "+membership_id)
+                message = message+membership_message
+        
+            # Print Welcome message to room
+            spark.messages.create(roomId=room_id, markdown=send_help(False))
+            welcome_message = "Welcome message (with help command) sent to the room.\n"
+            sys.stderr.write(welcome_message)
+            message = message+welcome_message
+        else:
+            message = "No user found with the email address: "+email
+            sys.stderr.write(message)
+    else: 
+        message = provided_case_number+" is not a valid case number"
+        sys.stderr.write(message)
+    
+    return message
 
 
 # Function to Setup the WebHook for the bot
@@ -319,7 +370,7 @@ def send_help(post_data):
 
 # Test command function that prints a test string
 def send_test():
-    message = "This is an old test message."
+    message = "This is a test message."
     return message
 
 # Supporting functions
@@ -395,6 +446,23 @@ def get_case_owner(case_number):
         else:
             return False
 
+# Get all rooms name matching case number
+def get_rooms(case_number):
+    url = "https://api.ciscospark.com/v1/rooms/"
+
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()['spark_token'],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("GET", url, headers=headers)
+
+    if (response.status_code == 200):
+        test = [x for x in response.json()['items'] if str(case_number) in x['title']]
+        return test
+    else:
+        response.raise_for_status()
 
 # Get room name
 def get_room_name(room_id):
@@ -424,6 +492,105 @@ def get_case_number(content):
     else:
         return False
 
+# Create Spark Room
+def create_room(case_number):
+    case_title = get_case_title(case_number)
+    if case_title:
+        data = "{ \"title\": \"SR "+case_number+": "+case_title+"\" }"
+    else:
+        data = "{ \"title\": \"SR "+case_number+"\" }"
+        
+    url = "https://api.ciscospark.com/v1/rooms"
+
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()["spark_token"],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("POST", url, headers=headers, data=data)
+    if (response.status_code == 200):
+        return response.json()['id']
+    else:
+        response.raise_for_status()
+
+# Get room membership
+def get_membership(room_id):
+    url = "https://api.ciscospark.com/v1/memberships?roomId="+room_id
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()["spark_token"],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("GET", url, headers=headers)
+    if (response.status_code == 200):
+        return response.json()
+    else:
+        response.raise_for_status()
+
+
+# Get person_id for email address
+def get_person_id(email):
+    if check_email_syntax(email):
+        url = "https://api.ciscospark.com/v1/people?email="+email
+        headers = {
+            'content-type': "application/json",
+            'authorization': "Bearer "+globals()["spark_token"],
+            'cache-control': "no-cache"
+            }
+    
+        response = requests.request("GET", url, headers=headers)
+        if (response.status_code == 200):
+            if response.json()['items']:
+                return response.json()['items'][0]['id']
+            else:
+                return False
+        else:
+            response.raise_for_status()
+    else:
+        return False
+
+
+# Check if email is syntactically correct
+def check_email_syntax(content):
+    pattern = re.compile("^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
+
+    if pattern.match(content):
+        return True
+    else:
+        return False
+
+
+# Create membership
+def create_membership(person_id, new_room_id):
+    data = "{ \"roomId\": \""+new_room_id+"\", \"personId\": \""+person_id+"\" }"
+
+    url = "https://api.ciscospark.com/v1/memberships"
+
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer "+globals()["spark_token"],
+        'cache-control': "no-cache"
+        }
+
+    response = requests.request("POST", url, headers=headers, data=data)
+    if (response.status_code == 200):
+        return response.json()['id']
+    else:
+        response.raise_for_status()
+
+# Check if room already exists for case and  user
+def room_exists_for_user(case_number, email):
+    person_id = get_person_id(email)
+    rooms = get_rooms(case_number)
+    for r in rooms:
+        room_memberships = get_membership(r['id'])
+        for m in room_memberships['items']:
+            if m['personId'] == person_id:
+                return r['id']
+            else:
+                continue
 
 
 # Setup the Spark connection and WebHook
