@@ -1,14 +1,5 @@
 #! /usr/bin/python
 """
-
-    This is a sample boilerplate application that provides the framework to quickly
-    build and deploy an interactive Spark Bot.
-
-    There are different strategies for building a Spark Bot.  You can either create
-    a new dedicated Spark Account for the bot, or create an "Bot Account" underneath
-    another Spark Account.  Either type will work with this boilerplate, just be sure
-    to provide the correct token and email account in the configuration.
-
     This Bot will use a provided Spark Account (identified by the Developer Token)
     and create a webhook to receive all messages sent to the account.   You will
     specify a set of command words that the Bot will "listen" for.  Any other message
@@ -33,15 +24,12 @@
     export SPARK_BOT_APP_NAME="imapex bot"
 
     If you are running the bot within a docker container, they would be set like this:
-    # ToDo - Add docker run command
     docker run -it --name sparkbot \
     -e "SPARK_BOT_EMAIL=myhero.demo@domain.com" \
     -e "SPARK_BOT_TOKEN=adfiafdadfadfaij12321kaf" \
     -e "SPARK_BOT_URL=http://myhero-spark.mantl.domain.com" \
     -e "SPARK_BOT_APP_NAME='imapex bot'" \
     sparkbot
-
-    # ToDo - API call for configuring the Spark info
 
     In cases where storing the Spark Email and Token as Environment Variables could
     be a security risk, you can alternatively set them via a REST request.
@@ -66,12 +54,19 @@ import re
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
 
+"""
+To Dos:
+customer description
+last modified
+
+"""
 
 # The list of commands the bot listens for
 # Each key in the dictionary is a command
 # The value is the help message sent for the command
 commands = {
     "/title": "Get title for TAC case number provided, if none provided will look for one in room name.",
+    "/description": "Get problem description for the TAC case number provided, if none provided will look in the room name."
     "/owner": "Get case owner for TAC case number provided, if none provided will look for one in room name.",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
@@ -195,7 +190,7 @@ def create(provided_case_number, email):
                 # Add user to the room
                 membership_id = create_membership(person_id, room_id)
                 membership_message = email+" added to the room.\n"
-                sys.stderr.write(member_message)
+                sys.stderr.write(membership_message)
                 sys.stderr.write("membershipId: "+membership_id)
                 message = message+membership_message
         
@@ -282,6 +277,8 @@ def process_incoming_message(post_data):
         reply = send_title(post_data)
     elif command in ["/owner"]:
         reply = send_owner(post_data)
+    elif command in ["/description"]:
+        reply = send_description(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -318,6 +315,40 @@ def send_title(post_data):
             message = "Sorry, no case number was found."
 
     return message
+
+# Command function that returns TAC case description for provided case number
+def send_description(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message = spark.messages.get(message_id)
+    content = extract_message("/description", message.text)
+
+    # Check if case number is found in message
+    case_number = get_case_number(content)
+    if case_number:
+        case_description = get_case_description(case_number)
+        if case_description:
+            message = "Problem description for SR "+str(case_number)+" is: "+case_description
+        else:
+            message = "No case found with SR "+case_number
+    else:
+        # If case number not provided in message, use room name
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            case_description = get_case_description(case_number)
+            if case_description:
+                message = "Problem Description for SR "+str(case_number)+" is: "+case_description
+            else:
+                message = "No case found with SR "+str(case_number)
+        else:
+            message = "Sorry, no case number was found."
+
+    return message
+
 
 # Command function that returns the owner of the TAC case number provided
 def send_owner(post_data):
@@ -419,6 +450,29 @@ def get_case_title(case_number):
             return title
         else:
             return False
+
+# Get case problem description from CASE API
+def get_case_description(case_number):
+    access_token = get_access_token()
+
+    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
+    headers = {
+        'authorization': "Bearer " + access_token,
+        'cache-control': "no-cache"
+    }
+    response = requests.request("GET", url, headers=headers)
+
+    if (response.status_code == 200):
+        # Uncomment to debug
+        # sys.stderr.write(response.text)
+
+        # Check if case was found
+        if response.json()['RESPONSE']['COUNT'] == 1:
+            title = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
+            return title
+        else:
+            return False
+
 
 # Get case owner from CASE API
 def get_case_owner(case_number):
