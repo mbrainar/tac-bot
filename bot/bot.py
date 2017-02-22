@@ -363,9 +363,13 @@ def send_owner(post_data):
     # Check if case number is found in message
     case_number = get_case_number(content)
     if case_number:
-        case_owner = get_case_owner(case_number)
-        if case_owner:
-            message = "Case owner for SR "+str(case_number)+" is: "+case_owner
+        case_details = get_case_details(case_number)
+        if case_details:
+            case_owner_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
+            case_owner_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
+            case_owner_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
+            case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
+            message = "Case owner for SR "+str(case_number)+" is: "+case_owner_first+" "+case_owner_last+" ("+case_owner_email+")"
         else:
             message = "No case found with SR "+case_number
     else:
@@ -428,6 +432,27 @@ def get_access_token():
         return response.json()['access_token']
     else:
         response.raise_for_status()
+
+# Get case details from CASE API
+def get_case_details(case_number):
+    access_token = get_access_token()
+
+    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
+    headers = {
+        'authorization': "Bearer " + access_token,
+        'cache-control': "no-cache"
+    }
+    response = requests.request("GET", url, headers=headers)
+
+    if (response.status_code == 200):
+        # Uncomment to debug
+        # sys.stderr.write(response.text)
+
+        # Check if case was found
+        if response.json()['RESPONSE']['COUNT'] == 1:
+            return response.json()
+        else:
+            return False
 
 # Get case title from CASE API
 def get_case_title(case_number):
