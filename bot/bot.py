@@ -302,7 +302,7 @@ def send_title(post_data):
     case_number = get_case_number(content)
     if not case_number:
         room_name = get_room_name(room_id)
-        case_number get_case_number(room_name)
+        case_number = get_case_number(room_name)
         if not case_number:
             message = "Sorry, no case number was found."
     message = "Title for SR "+case_number+" is: "
