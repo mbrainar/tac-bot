@@ -66,7 +66,7 @@ last modified
 # The value is the help message sent for the command
 commands = {
     "/title": "Get title for TAC case number provided, if none provided will look for one in room name.",
-    "/description": "Get problem description for the TAC case number provided, if none provided will look in the room name."
+    "/description": "Get problem description for the TAC case number provided, if none provided will look in the room name.",
     "/owner": "Get case owner for TAC case number provided, if none provided will look for one in room name.",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
