@@ -283,7 +283,12 @@ def process_incoming_message(post_data):
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
 
-# Command function that returns TAC case title for provided case number
+
+#
+# Command functions
+#
+
+# Returns case title for provided case number
 def send_title(post_data):
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -295,28 +300,23 @@ def send_title(post_data):
 
     # Check if case number is found in message
     case_number = get_case_number(content)
-    if case_number:
-        case_title = get_case_title(case_number)
-        if case_title:
-            message = "Title for SR "+str(case_number)+" is: "+case_title
-        else:
-            message = "No case found with SR "+case_number
-    else:
-        # If case number not provided in message, use room name
+    if not case_number:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
-        if case_number:        
-            case_title = get_case_title(case_number)
-            if case_title:
-                message = "Title for SR "+str(case_number)+" is: "+case_title
-            else:
-                message = "No case found with SR "+str(case_number)
-        else:
+        case_number get_case_number(room_name)
+        if not case_number:
             message = "Sorry, no case number was found."
+    message = "Title for SR "+case_number+" is: "
 
+    # Get the details about the case number
+    case_details = get_case_details(case_number)
+    if case_details:
+        case_title = case_details['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
+        message = message+case_title
+    else:
+        message = "No case found with SR "+case_number
     return message
 
-# Command function that returns TAC case description for provided case number
+# Returns case description for provided case number
 def send_description(post_data):
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -329,8 +329,9 @@ def send_description(post_data):
     # Check if case number is found in message
     case_number = get_case_number(content)
     if case_number:
-        case_description = get_case_description(case_number)
-        if case_description:
+        case_details = get_case_details(case_number)
+        if case_details:
+            case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
             message = "Problem description for SR "+str(case_number)+" is: "+case_description
         else:
             message = "No case found with SR "+case_number
@@ -339,18 +340,17 @@ def send_description(post_data):
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
         if case_number:
-            case_description = get_case_description(case_number)
-            if case_description:
-                message = "Problem Description for SR "+str(case_number)+" is: "+case_description
+            case_details = get_case_details(case_number)
+            if case_details:
+                case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
+                message = "Problem description for SR "+str(case_number)+" is: "+case_description
             else:
                 message = "No case found with SR "+str(case_number)
         else:
             message = "Sorry, no case number was found."
-
     return message
 
-
-# Command function that returns the owner of the TAC case number provided
+# Returns the owner of the TAC case number provided
 def send_owner(post_data):
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -384,7 +384,6 @@ def send_owner(post_data):
                 message = "No case found with SR "+str(case_number)
         else:
             message = "Sorry, no case number was found."
-
     return message
 
 
