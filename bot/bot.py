@@ -96,8 +96,8 @@ def process_webhook():
 
     post_data = request.get_json(force=True)
     # Uncomment to debug
-    # sys.stderr.write("Webhook content:" + "\n")
-    # sys.stderr.write(str(post_data) + "\n")
+    sys.stderr.write("Webhook content:" + "\n")
+    sys.stderr.write(str(post_data) + "\n")
 
     # Take the posted data and send to the processing function
     process_incoming_message(post_data)
@@ -244,13 +244,13 @@ def process_incoming_message(post_data):
     message_id = post_data["data"]["id"]
     message = spark.messages.get(message_id)
     # Uncomment to debug
-    # sys.stderr.write("Message content:" + "\n")
-    # sys.stderr.write(str(message) + "\n")
+    sys.stderr.write("Message content:" + "\n")
+    sys.stderr.write(str(message) + "\n")
 
     # First make sure not processing a message from the bot
     if message.personEmail in spark.people.me().emails:
         # Uncomment to debug
-        # sys.stderr.write("Message from bot recieved." + "\n")
+        sys.stderr.write("Message from bot recieved." + "\n")
         return ""
 
     # Log details on message
