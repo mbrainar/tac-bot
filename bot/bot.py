@@ -154,6 +154,7 @@ def health_check():
     """
     return "Up and healthy"
 
+
 # REST API for room creation
 @app.route("/create/<provided_case_number>/<email>", methods=["GET"])
 def create(provided_case_number, email):
@@ -452,6 +453,8 @@ def get_case_details(case_number):
             return response.json()
         else:
             return False
+    else:
+        response.raise_for_status()
 
 # Get case title from CASE API
 def get_case_title(case_number):
@@ -497,33 +500,6 @@ def get_case_description(case_number):
         else:
             return False
 
-
-# Get case owner from CASE API
-def get_case_owner(case_number):
-    access_token = get_access_token()
-
-    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
-    headers = {
-        'authorization': "Bearer " + access_token,
-        'cache-control': "no-cache"
-    }
-    response = requests.request("GET", url, headers=headers)
-
-    if (response.status_code == 200):
-        # Uncomment to debug
-        # sys.stderr.write(response.text)
-
-        # Check if case was found
-        if response.json()['RESPONSE']['COUNT'] == 1:
-            owner_id = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
-            owner_first_name = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
-            owner_last_name = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
-            owner_email = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
-            owner_string = owner_first_name+" "+owner_last_name+" ("+owner_email+")"
-            return owner_string
-        else:
-            return False
-
 # Get all rooms name matching case number
 def get_rooms(case_number):
     url = "https://api.ciscospark.com/v1/rooms/"
@@ -542,7 +518,7 @@ def get_rooms(case_number):
     else:
         response.raise_for_status()
 
-# Get room name
+# Get Spark room name
 def get_room_name(room_id):
     url = "https://api.ciscospark.com/v1/rooms/"+room_id
 
@@ -554,14 +530,17 @@ def get_room_name(room_id):
 
     response = requests.request("GET", url, headers=headers)
     if (response.status_code == 200):
-        return response.json()['title']
+        if not response.json()['errors']:
+            return response.json()['title']
+        else:
+            return False
     else:
         response.raise_for_status()
 
 # Match case number in string
 def get_case_number(content):
     # Check if there is a case number in the incoming message content
-    pattern = re.compile("([0-9]{9})")
+    pattern = re.compile("(6[0-9]{8})")
     match = pattern.search(content)
 
     if match:
