@@ -75,6 +75,7 @@ commands = {
     "/title": "Get title for TAC case number provided, if none provided will look for one in room name.",
     "/description": "Get problem description for the TAC case number provided, if none provided will look in the room name.",
     "/owner": "Get case owner for TAC case number provided, if none provided will look for one in room name.",
+    "/contract": "Get contract number with which the case was opened",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
 	"/test": "Print test message."
@@ -287,6 +288,8 @@ def process_incoming_message(post_data):
         reply = send_owner(post_data)
     elif command in ["/description"]:
         reply = send_description(post_data)
+    elif command in ["/contract"]:
+        reply = send_contract(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -342,7 +345,7 @@ def send_description(post_data):
         case_number = get_case_number(room_name)
         if not case_number:
             message = "Sorry, no case number was found."
-    message = "Problem description for SR "+case_number+" is: <br>"
+    message = "Problem description for SR "+str(case_number)+" is: <br>"
 
     # Get the details about the case number
     case_details = get_case_details(case_number)
@@ -350,7 +353,7 @@ def send_description(post_data):
         case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
         message = message+case_description
     else:
-        message = "No case found with SR "+case_number
+        message = "No case found with SR "+str(case_number)
     return message
 
 
@@ -382,8 +385,38 @@ def send_owner(post_data):
         case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
         message = message+case_owner_first+" "+case_owner_last+" ("+case_owner_email+")"
     else:
-        message = "No case found with SR "+case_number
+        message = "No case found with SR "+str(case_number)
     return message
+
+
+# Returns contract number for provided case number
+def send_contract(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message = spark.messages.get(message_id)
+    content = extract_message("/description", message.text)
+
+    # Check if case number is found in message
+    case_number = get_case_number(content)
+    if not case_number:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if not case_number:
+            message = "Sorry, no case number was found."
+    message = "The contract number used to open SR "+str(case_number)+" is: "
+
+    # Get the details about the case number
+    case_details = get_case_details(case_number)
+    if case_details:
+        case_contract = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTRACT_ID']
+        message = message+str(case_contract)
+    else:
+        message = "No case found with SR "+str(case_number)
+    return message
+
 
 
 # Sample command function that just echos back the sent message
