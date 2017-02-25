@@ -1,14 +1,5 @@
 #! /usr/bin/python
 """
-
-    This is a sample boilerplate application that provides the framework to quickly
-    build and deploy an interactive Spark Bot.
-
-    There are different strategies for building a Spark Bot.  You can either create
-    a new dedicated Spark Account for the bot, or create an "Bot Account" underneath
-    another Spark Account.  Either type will work with this boilerplate, just be sure
-    to provide the correct token and email account in the configuration.
-
     This Bot will use a provided Spark Account (identified by the Developer Token)
     and create a webhook to receive all messages sent to the account.   You will
     specify a set of command words that the Bot will "listen" for.  Any other message
@@ -33,15 +24,12 @@
     export SPARK_BOT_APP_NAME="imapex bot"
 
     If you are running the bot within a docker container, they would be set like this:
-    # ToDo - Add docker run command
     docker run -it --name sparkbot \
     -e "SPARK_BOT_EMAIL=myhero.demo@domain.com" \
     -e "SPARK_BOT_TOKEN=adfiafdadfadfaij12321kaf" \
     -e "SPARK_BOT_URL=http://myhero-spark.mantl.domain.com" \
     -e "SPARK_BOT_APP_NAME='imapex bot'" \
     sparkbot
-
-    # ToDo - API call for configuring the Spark info
 
     In cases where storing the Spark Email and Token as Environment Variables could
     be a security risk, you can alternatively set them via a REST request.
@@ -66,12 +54,26 @@ import re
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
 
+"""
+To Dos:
+    last modified (calculate duration)
+    create date (calculate duration)
+    contact name/email/phone
+    RMAs
+    contract
+    device serial
+    invite cse to room
+    severity
+    case status
+    last note created with "action plan" or "next steps" in note detail
+"""
 
 # The list of commands the bot listens for
 # Each key in the dictionary is a command
 # The value is the help message sent for the command
 commands = {
     "/title": "Get title for TAC case number provided, if none provided will look for one in room name.",
+    "/description": "Get problem description for the TAC case number provided, if none provided will look in the room name.",
     "/owner": "Get case owner for TAC case number provided, if none provided will look for one in room name.",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
@@ -159,6 +161,7 @@ def health_check():
     """
     return "Up and healthy"
 
+
 # REST API for room creation
 @app.route("/create/<provided_case_number>/<email>", methods=["GET"])
 def create(provided_case_number, email):
@@ -195,7 +198,7 @@ def create(provided_case_number, email):
                 # Add user to the room
                 membership_id = create_membership(person_id, room_id)
                 membership_message = email+" added to the room.\n"
-                sys.stderr.write(member_message)
+                sys.stderr.write(membership_message)
                 sys.stderr.write("membershipId: "+membership_id)
                 message = message+membership_message
         
@@ -282,11 +285,18 @@ def process_incoming_message(post_data):
         reply = send_title(post_data)
     elif command in ["/owner"]:
         reply = send_owner(post_data)
+    elif command in ["/description"]:
+        reply = send_description(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
 
-# Command function that returns TAC case title for provided case number
+
+#
+# Command functions
+#
+
+# Returns case title for provided case number
 def send_title(post_data):
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -298,28 +308,53 @@ def send_title(post_data):
 
     # Check if case number is found in message
     case_number = get_case_number(content)
-    if case_number:
-        case_title = get_case_title(case_number)
-        if case_title:
-            message = "Title for SR "+str(case_number)+" is: "+case_title
-        else:
-            message = "No case found with SR "+case_number
-    else:
-        # If case number not provided in message, use room name
+    if not case_number:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if case_number:        
-            case_title = get_case_title(case_number)
-            if case_title:
-                message = "Title for SR "+str(case_number)+" is: "+case_title
-            else:
-                message = "No case found with SR "+str(case_number)
-        else:
+        if not case_number:
             message = "Sorry, no case number was found."
+    message = "Title for SR "+case_number+" is: "
 
+    # Get the details about the case number
+    case_details = get_case_details(case_number)
+    if case_details:
+        case_title = case_details['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
+        message = message+case_title
+    else:
+        message = "No case found with SR "+case_number
     return message
 
-# Command function that returns the owner of the TAC case number provided
+
+# Returns case description for provided case number
+def send_description(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message = spark.messages.get(message_id)
+    content = extract_message("/description", message.text)
+
+    # Check if case number is found in message
+    case_number = get_case_number(content)
+    if not case_number:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if not case_number:
+            message = "Sorry, no case number was found."
+    message = "Problem description for SR "+case_number+" is: <br>"
+
+    # Get the details about the case number
+    case_details = get_case_details(case_number)
+    if case_details:
+        case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
+        message = message+case_description
+    else:
+        message = "No case found with SR "+case_number
+    return message
+
+
+# Returns the owner of the TAC case number provided
 def send_owner(post_data):
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -331,25 +366,23 @@ def send_owner(post_data):
 
     # Check if case number is found in message
     case_number = get_case_number(content)
-    if case_number:
-        case_owner = get_case_owner(case_number)
-        if case_owner:
-            message = "Case owner for SR "+str(case_number)+" is: "+case_owner
-        else:
-            message = "No case found with SR "+case_number
-    else:
-        # If case number not provided in message, use room name
+    if not case_number:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if case_number:
-            case_owner = get_case_owner(case_number)
-            if case_owner:
-                message = "Case owner for SR "+str(case_number)+" is: "+case_owner
-            else:
-                message = "No case found with SR "+str(case_number)
-        else:
+        if not case_number:
             message = "Sorry, no case number was found."
+    message = "Case owner for SR "+str(case_number)+" is: "
 
+    #Get the details about the case number
+    case_details = get_case_details(case_number)
+    if case_details:
+        case_owner_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
+        case_owner_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
+        case_owner_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
+        case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
+        message = message+case_owner_first+" "+case_owner_last+" ("+case_owner_email+")"
+    else:
+        message = "No case found with SR "+case_number
     return message
 
 
@@ -398,6 +431,29 @@ def get_access_token():
     else:
         response.raise_for_status()
 
+# Get case details from CASE API
+def get_case_details(case_number):
+    access_token = get_access_token()
+
+    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
+    headers = {
+        'authorization': "Bearer " + access_token,
+        'cache-control': "no-cache"
+    }
+    response = requests.request("GET", url, headers=headers)
+
+    if (response.status_code == 200):
+        # Uncomment to debug
+        # sys.stderr.write(response.text)
+
+        # Check if case was found
+        if response.json()['RESPONSE']['COUNT'] == 1:
+            return response.json()
+        else:
+            return False
+    else:
+        response.raise_for_status()
+
 # Get case title from CASE API
 def get_case_title(case_number):
     access_token = get_access_token()
@@ -420,8 +476,8 @@ def get_case_title(case_number):
         else:
             return False
 
-# Get case owner from CASE API
-def get_case_owner(case_number):
+# Get case problem description from CASE API
+def get_case_description(case_number):
     access_token = get_access_token()
 
     url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
@@ -437,12 +493,8 @@ def get_case_owner(case_number):
 
         # Check if case was found
         if response.json()['RESPONSE']['COUNT'] == 1:
-            owner_id = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
-            owner_first_name = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
-            owner_last_name = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
-            owner_email = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
-            owner_string = owner_first_name+" "+owner_last_name+" ("+owner_email+")"
-            return owner_string
+            title = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
+            return title
         else:
             return False
 
@@ -464,7 +516,7 @@ def get_rooms(case_number):
     else:
         response.raise_for_status()
 
-# Get room name
+# Get Spark room name
 def get_room_name(room_id):
     url = "https://api.ciscospark.com/v1/rooms/"+room_id
 
@@ -476,14 +528,17 @@ def get_room_name(room_id):
 
     response = requests.request("GET", url, headers=headers)
     if (response.status_code == 200):
-        return response.json()['title']
+        if 'errors' not in response.json():
+            return response.json()['title']
+        else:
+            return False
     else:
         response.raise_for_status()
 
 # Match case number in string
 def get_case_number(content):
     # Check if there is a case number in the incoming message content
-    pattern = re.compile("([0-9]{9})")
+    pattern = re.compile("(6[0-9]{8})")
     match = pattern.search(content)
 
     if match:
