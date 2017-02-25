@@ -56,9 +56,16 @@ app = Flask(__name__)
 
 """
 To Dos:
-customer description
-last modified
-
+    last modified (calculate duration)
+    create date (calculate duration)
+    contact name/email/phone
+    RMAs
+    contract
+    device serial
+    invite cse to room
+    severity
+    case status
+    last note created with "action plan" or "next steps" in note detail
 """
 
 # The list of commands the bot listens for
@@ -96,8 +103,8 @@ def process_webhook():
 
     post_data = request.get_json(force=True)
     # Uncomment to debug
-    sys.stderr.write("Webhook content:" + "\n")
-    sys.stderr.write(str(post_data) + "\n")
+    # sys.stderr.write("Webhook content:" + "\n")
+    # sys.stderr.write(str(post_data) + "\n")
 
     # Take the posted data and send to the processing function
     process_incoming_message(post_data)
@@ -244,13 +251,13 @@ def process_incoming_message(post_data):
     message_id = post_data["data"]["id"]
     message = spark.messages.get(message_id)
     # Uncomment to debug
-    sys.stderr.write("Message content:" + "\n")
-    sys.stderr.write(str(message) + "\n")
+    # sys.stderr.write("Message content:" + "\n")
+    # sys.stderr.write(str(message) + "\n")
 
     # First make sure not processing a message from the bot
     if message.personEmail in spark.people.me().emails:
         # Uncomment to debug
-        sys.stderr.write("Message from bot recieved." + "\n")
+        # sys.stderr.write("Message from bot recieved." + "\n")
         return ""
 
     # Log details on message
@@ -317,6 +324,7 @@ def send_title(post_data):
         message = "No case found with SR "+case_number
     return message
 
+
 # Returns case description for provided case number
 def send_description(post_data):
     # Determine the Spark Room to send reply to
@@ -329,27 +337,22 @@ def send_description(post_data):
 
     # Check if case number is found in message
     case_number = get_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if case_details:
-            case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
-            message = "Problem description for SR "+str(case_number)+" is: "+case_description
-        else:
-            message = "No case found with SR "+case_number
-    else:
-        # If case number not provided in message, use room name
+    if not case_number:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if case_details:
-                case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
-                message = "Problem description for SR "+str(case_number)+" is: "+case_description
-            else:
-                message = "No case found with SR "+str(case_number)
-        else:
+        if not case_number:
             message = "Sorry, no case number was found."
+    message = "Problem description for SR "+case_number+" is: <br>"
+
+    # Get the details about the case number
+    case_details = get_case_details(case_number)
+    if case_details:
+        case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
+        message = message+case_description
+    else:
+        message = "No case found with SR "+case_number
     return message
+
 
 # Returns the owner of the TAC case number provided
 def send_owner(post_data):
@@ -363,28 +366,23 @@ def send_owner(post_data):
 
     # Check if case number is found in message
     case_number = get_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if case_details:
-            case_owner_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
-            case_owner_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
-            case_owner_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
-            case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
-            message = "Case owner for SR "+str(case_number)+" is: "+case_owner_first+" "+case_owner_last+" ("+case_owner_email+")"
-        else:
-            message = "No case found with SR "+case_number
-    else:
-        # If case number not provided in message, use room name
+    if not case_number:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if case_number:
-            case_owner = get_case_owner(case_number)
-            if case_owner:
-                message = "Case owner for SR "+str(case_number)+" is: "+case_owner
-            else:
-                message = "No case found with SR "+str(case_number)
-        else:
+        if not case_number:
             message = "Sorry, no case number was found."
+    message = "Case owner for SR "+str(case_number)+" is: "
+
+    #Get the details about the case number
+    case_details = get_case_details(case_number)
+    if case_details:
+        case_owner_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
+        case_owner_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
+        case_owner_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
+        case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
+        message = message+case_owner_first+" "+case_owner_last+" ("+case_owner_email+")"
+    else:
+        message = "No case found with SR "+case_number
     return message
 
 
@@ -530,7 +528,7 @@ def get_room_name(room_id):
 
     response = requests.request("GET", url, headers=headers)
     if (response.status_code == 200):
-        if not response.json()['errors']:
+        if 'errors' not in response.json():
             return response.json()['title']
         else:
             return False
