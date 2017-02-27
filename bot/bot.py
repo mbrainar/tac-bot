@@ -54,28 +54,28 @@ import re
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
 
-"""
-To Dos:
-    last modified (calculate duration)
-    create date (calculate duration)
-    contact name/email/phone
-    RMAs
-    contract
-    device serial
-    invite cse to room
-    severity
-    case status
-    last note created with "action plan" or "next steps" in note detail
-"""
+
+# ToDos:
+    # todo last modified (calculate duration)
+    # todo create date (calculate duration)
+    # todo contact name/email/phone
+    # todo RMAs
+    # todo device serial
+    # todo invite cse to room
+    # todo severity
+    # todo case status
+    # todo last note created with "action plan" or "next steps" in note detail
+
 
 # The list of commands the bot listens for
 # Each key in the dictionary is a command
 # The value is the help message sent for the command
 commands = {
-    "/title": "Get title for TAC case number provided, if none provided will look for one in room name.",
+    "/title": "Get title for TAC case number provided, if none provided will look in room name.",
     "/description": "Get problem description for the TAC case number provided, if none provided will look in the room name.",
-    "/owner": "Get case owner for TAC case number provided, if none provided will look for one in room name.",
-    "/contract": "Get contract number with which the case was opened",
+    "/owner": "Get case owner for TAC case number provided, if none provided will look in room name.",
+    "/contract": "Get contract number associated with the case number provided, if none provided will look in the room name.",
+    "/customer": "Get customer contact info for the TAC case number provided, if none provided will look in room name.",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
 	"/test": "Print test message."
@@ -290,6 +290,8 @@ def process_incoming_message(post_data):
         reply = send_description(post_data)
     elif command in ["/contract"]:
         reply = send_contract(post_data)
+    elif command in ["/customer"]:
+        reply = send_customer(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -306,25 +308,40 @@ def send_title(post_data):
 
     # Get the details about the message that was sent.
     message_id = post_data["data"]["id"]
-    message = spark.messages.get(message_id)
-    content = extract_message("/title", message.text)
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/title", message_in.text)
 
-    # Check if case number is found in message
-    case_number = get_case_number(content)
-    if not case_number:
+    # Check if case number is found in message content
+    if content:
+        case_number = get_case_number(content)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "Title for SR "+str(case_number)+" is: "
+            else:
+                message = "No case was found for SR "+str(case_number)
+                case_details = False
+        else:
+            message = "No valid case number provided."
+            case_details = False
+    else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if not case_number:
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "Title for SR "+str(case_number)+" is: "
+            else:
+                message = "No case was found for SR "+str(case_number)
+                case_details = False
+        else:
             message = "Sorry, no case number was found."
-    message = "Title for SR "+case_number+" is: "
+            case_details = False
 
-    # Get the details about the case number
-    case_details = get_case_details(case_number)
+    # Get the title from the case details
     if case_details:
         case_title = case_details['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
         message = message+case_title
-    else:
-        message = "No case found with SR "+case_number
     return message
 
 
@@ -397,7 +414,7 @@ def send_contract(post_data):
     # Get the details about the message that was sent.
     message_id = post_data["data"]["id"]
     message = spark.messages.get(message_id)
-    content = extract_message("/description", message.text)
+    content = extract_message("/contract", message.text)
 
     # Check if case number is found in message
     case_number = get_case_number(content)
@@ -417,6 +434,52 @@ def send_contract(post_data):
         message = "No case found with SR "+str(case_number)
     return message
 
+
+# Returns the owner of the TAC case number provided
+def send_customer(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message = spark.messages.get(message_id)
+    content = extract_message("/customer", message.text)
+
+    # Check if case number is found in message
+    case_number = get_case_number(content)
+    if not case_number:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if not case_number:
+            message = "Sorry, no case number was found."
+    message = "Customer contact for SR "+str(case_number)+" is: <br>"
+
+    #Get the details about the case number
+    case_details = get_case_details(case_number)
+    if case_details:
+        case_customer_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_ID']
+        case_customer_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_FIRST_NAME']
+        case_customer_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_LAST_NAME']
+        if case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_EMAIL_IDS']:
+            case_customer_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_EMAIL_IDS']['ID']
+        else:
+            case_customer_email = False
+        if case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_BUSINESS_PHONE_NUMBERS']:
+            case_customer_business = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_BUSINESS_PHONE_NUMBERS']['ID']
+        else:
+            case_customer_business = False
+        if case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_MOBILE_PHONE_NUMBERS']:
+            case_customer_mobile = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_MOBILE_PHONE_NUMBERS']['ID']
+        else:
+            case_customer_mobile = False
+        message = message+case_customer_first+" "+case_customer_last
+        message = message+"<br>CCO ID: "+case_customer_id if case_customer_id else message
+        message = message+"<br>Email: "+case_customer_email if case_customer_email else message
+        message = message+"<br>Business phone: "+case_customer_business if case_customer_business else message
+        message = message+"<br>Mobile phone: "+case_customer_mobile if case_customer_mobile else message
+    else:
+        message = "No case found with SR "+str(case_number)
+    return message
 
 
 # Sample command function that just echos back the sent message
