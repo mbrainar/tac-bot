@@ -355,22 +355,37 @@ def send_description(post_data):
     message = spark.messages.get(message_id)
     content = extract_message("/description", message.text)
 
-    # Check if case number is found in message
-    case_number = get_case_number(content)
-    if not case_number:
+    # Check if case number is found in message content
+    if content:
+        case_number = get_case_number(content)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "Problem description for SR "+str(case_number)+" is: <br>"
+            else:
+                message = "No case was found for SR " + str(case_number)
+                case_details = False
+        else:
+            message = "No valid case number provided."
+            case_details = False
+    else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if not case_number:
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "Problem description for SR "+str(case_number)+" is: <br>"
+            else:
+                message = "No case was found for SR " + str(case_number)
+                case_details = False
+        else:
             message = "Sorry, no case number was found."
-    message = "Problem description for SR "+str(case_number)+" is: <br>"
+            case_details = False
 
-    # Get the details about the case number
-    case_details = get_case_details(case_number)
+    # Get the cescription from the case details
     if case_details:
         case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
         message = message+case_description
-    else:
-        message = "No case found with SR "+str(case_number)
     return message
 
 
@@ -384,25 +399,40 @@ def send_owner(post_data):
     message = spark.messages.get(message_id)
     content = extract_message("/owner", message.text)
 
-    # Check if case number is found in message
-    case_number = get_case_number(content)
-    if not case_number:
+    # Check if case number is found in message content
+    if content:
+        case_number = get_case_number(content)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "Case owner for SR "+str(case_number)+" is: "
+            else:
+                message = "No case was found for SR " + str(case_number)
+                case_details = False
+        else:
+            message = "No valid case number provided."
+            case_details = False
+    else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if not case_number:
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "Case owner for SR "+str(case_number)+" is: "
+            else:
+                message = "No case was found for SR " + str(case_number)
+                case_details = False
+        else:
             message = "Sorry, no case number was found."
-    message = "Case owner for SR "+str(case_number)+" is: "
+            case_details = False
 
-    #Get the details about the case number
-    case_details = get_case_details(case_number)
+    #Get the owner from the case details
     if case_details:
         case_owner_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
         case_owner_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
         case_owner_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
         case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
         message = message+case_owner_first+" "+case_owner_last+" ("+case_owner_email+")"
-    else:
-        message = "No case found with SR "+str(case_number)
     return message
 
 
