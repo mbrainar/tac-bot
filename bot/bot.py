@@ -446,22 +446,37 @@ def send_contract(post_data):
     message = spark.messages.get(message_id)
     content = extract_message("/contract", message.text)
 
-    # Check if case number is found in message
-    case_number = get_case_number(content)
-    if not case_number:
+    # Check if case number is found in message content
+    if content:
+        case_number = get_case_number(content)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "The contract number used to open SR "+str(case_number)+" is: "
+            else:
+                message = "No case was found for SR " + str(case_number)
+                case_details = False
+        else:
+            message = "No valid case number provided."
+            case_details = False
+    else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if not case_number:
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "The contract number used to open SR "+str(case_number)+" is: "
+            else:
+                message = "No case was found for SR " + str(case_number)
+                case_details = False
+        else:
             message = "Sorry, no case number was found."
-    message = "The contract number used to open SR "+str(case_number)+" is: "
+            case_details = False
 
-    # Get the details about the case number
-    case_details = get_case_details(case_number)
+    # Get the contract from the case details
     if case_details:
         case_contract = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTRACT_ID']
         message = message+str(case_contract)
-    else:
-        message = "No case found with SR "+str(case_number)
     return message
 
 
@@ -475,17 +490,34 @@ def send_customer(post_data):
     message = spark.messages.get(message_id)
     content = extract_message("/customer", message.text)
 
-    # Check if case number is found in message
-    case_number = get_case_number(content)
-    if not case_number:
+    # Check if case number is found in message content
+    if content:
+        case_number = get_case_number(content)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "Customer contact for SR "+str(case_number)+" is: <br>"
+            else:
+                message = "No case was found for SR " + str(case_number)
+                case_details = False
+        else:
+            message = "No valid case number provided."
+            case_details = False
+    else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
-        if not case_number:
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details:
+                message = "Customer contact for SR "+str(case_number)+" is: <br>"
+            else:
+                message = "No case was found for SR " + str(case_number)
+                case_details = False
+        else:
             message = "Sorry, no case number was found."
-    message = "Customer contact for SR "+str(case_number)+" is: <br>"
+            case_details = False
 
-    #Get the details about the case number
-    case_details = get_case_details(case_number)
+    #Get the customer info from case details
     if case_details:
         case_customer_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_ID']
         case_customer_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_FIRST_NAME']
@@ -507,8 +539,6 @@ def send_customer(post_data):
         message = message+"<br>Email: "+case_customer_email if case_customer_email else message
         message = message+"<br>Business phone: "+case_customer_business if case_customer_business else message
         message = message+"<br>Mobile phone: "+case_customer_mobile if case_customer_mobile else message
-    else:
-        message = "No case found with SR "+str(case_number)
     return message
 
 
