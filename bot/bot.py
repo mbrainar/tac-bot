@@ -76,6 +76,7 @@ commands = {
     "/owner": "Get case owner for TAC case number provided, if none provided will look in room name.",
     "/contract": "Get contract number associated with the case number provided, if none provided will look in the room name.",
     "/customer": "Get customer contact info for the TAC case number provided, if none provided will look in room name.",
+    "/status": "Get status and severity for the TAC case number provided, if none provided will look in the room name",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
 	"/test": "Print test message."
@@ -292,6 +293,8 @@ def process_incoming_message(post_data):
         reply = send_contract(post_data)
     elif command in ["/customer"]:
         reply = send_customer(post_data)
+    elif command in ["/status"]:
+        reply = send_status(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -312,36 +315,27 @@ def send_title(post_data):
     content = extract_message("/title", message_in.text)
 
     # Check if case number is found in message content
-    if content:
-        case_number = get_case_number(content)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if case_details:
-                message = "Title for SR "+str(case_number)+" is: "
-            else:
-                message = "No case was found for SR "+str(case_number)
-                case_details = False
-        else:
-            message = "No valid case number provided."
-            case_details = False
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if not case_details:
+            message = "No case was found for SR " + str(case_number)
+            return message
     else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
-            if case_details:
-                message = "Title for SR "+str(case_number)+" is: "
-            else:
-                message = "No case was found for SR "+str(case_number)
-                case_details = False
+            if not case_details:
+                message = "No case was found for SR " + str(case_number)
+                return message
         else:
             message = "Sorry, no case number was found."
-            case_details = False
+            return message
 
     # Get the title from the case details
-    if case_details:
-        case_title = case_details['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
-        message = message+case_title
+    case_title = case_details['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
+    message = "Title for SR {} is: {}".format(case_number, case_title)
     return message
 
 
@@ -352,40 +346,31 @@ def send_description(post_data):
 
     # Get the details about the message that was sent.
     message_id = post_data["data"]["id"]
-    message = spark.messages.get(message_id)
-    content = extract_message("/description", message.text)
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/description", message_in.text)
 
     # Check if case number is found in message content
-    if content:
-        case_number = get_case_number(content)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if case_details:
-                message = "Problem description for SR "+str(case_number)+" is: <br>"
-            else:
-                message = "No case was found for SR " + str(case_number)
-                case_details = False
-        else:
-            message = "No valid case number provided."
-            case_details = False
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if not case_details:
+            message = "No case was found for SR " + str(case_number)
+            return message
     else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
-            if case_details:
-                message = "Problem description for SR "+str(case_number)+" is: <br>"
-            else:
+            if not case_details:
                 message = "No case was found for SR " + str(case_number)
-                case_details = False
+                return message
         else:
             message = "Sorry, no case number was found."
-            case_details = False
+            return message
 
     # Get the cescription from the case details
-    if case_details:
-        case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
-        message = message+case_description
+    case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
+    message = "Problem description for SR {} is: <br>{}".format(case_number, case_description)
     return message
 
 
@@ -396,43 +381,34 @@ def send_owner(post_data):
 
     # Get the details about the message that was sent.
     message_id = post_data["data"]["id"]
-    message = spark.messages.get(message_id)
-    content = extract_message("/owner", message.text)
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/owner", message_in.text)
 
     # Check if case number is found in message content
-    if content:
-        case_number = get_case_number(content)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if case_details:
-                message = "Case owner for SR "+str(case_number)+" is: "
-            else:
-                message = "No case was found for SR " + str(case_number)
-                case_details = False
-        else:
-            message = "No valid case number provided."
-            case_details = False
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if not case_details:
+            message = "No case was found for SR " + str(case_number)
+            return message
     else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
-            if case_details:
-                message = "Case owner for SR "+str(case_number)+" is: "
-            else:
+            if not case_details:
                 message = "No case was found for SR " + str(case_number)
-                case_details = False
+                return message
         else:
             message = "Sorry, no case number was found."
-            case_details = False
+            return message
 
     #Get the owner from the case details
-    if case_details:
-        case_owner_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
-        case_owner_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
-        case_owner_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
-        case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
-        message = message+case_owner_first+" "+case_owner_last+" ("+case_owner_email+")"
+    case_owner_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
+    case_owner_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
+    case_owner_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
+    case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
+    message = "Case owner for SR {} is: {} {} ({})". format(case_number, case_owner_first, case_owner_last, case_owner_email)
     return message
 
 
@@ -443,40 +419,31 @@ def send_contract(post_data):
 
     # Get the details about the message that was sent.
     message_id = post_data["data"]["id"]
-    message = spark.messages.get(message_id)
-    content = extract_message("/contract", message.text)
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/contract", message_in.text)
 
     # Check if case number is found in message content
-    if content:
-        case_number = get_case_number(content)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if case_details:
-                message = "The contract number used to open SR "+str(case_number)+" is: "
-            else:
-                message = "No case was found for SR " + str(case_number)
-                case_details = False
-        else:
-            message = "No valid case number provided."
-            case_details = False
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if not case_details:
+            message = "No case was found for SR " + str(case_number)
+            return message
     else:
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
-            if case_details:
-                message = "The contract number used to open SR "+str(case_number)+" is: "
-            else:
+            if not case_details:
                 message = "No case was found for SR " + str(case_number)
-                case_details = False
+                return message
         else:
             message = "Sorry, no case number was found."
-            case_details = False
+            return message
 
     # Get the contract from the case details
-    if case_details:
-        case_contract = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTRACT_ID']
-        message = message+str(case_contract)
+    case_contract = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTRACT_ID']
+    message = "The contract number used to open SR {} is: {}".format(case_number, case_contract)
     return message
 
 
@@ -487,8 +454,8 @@ def send_customer(post_data):
 
     # Get the details about the message that was sent.
     message_id = post_data["data"]["id"]
-    message = spark.messages.get(message_id)
-    content = extract_message("/customer", message.text)
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/customer", message_in.text)
 
     # Check if case number is found in message content
     if content:
@@ -542,6 +509,42 @@ def send_customer(post_data):
     return message
 
 
+# Returns case status and severity for provided case number
+def send_status(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/title", message_in.text)
+
+    # Check if case number is found in message content
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if not case_details:
+            message = "No case was found for SR "+str(case_number)
+            return message
+    else:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if not case_details:
+                message = "No case was found for SR "+str(case_number)
+                return message
+        else:
+            message = "Sorry, no case number was found."
+            return message
+
+    # Get the title from the case details
+    case_status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
+    case_severity = case_details['RESPONSE']['CASES']['CASE_DETAIL']['SEVERITY']
+    message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
+    return message
+
+
 # Sample command function that just echos back the sent message
 def send_echo(incoming):
     # Get sent message
@@ -562,7 +565,11 @@ def send_test():
     message = "This is a test message."
     return message
 
+
+#
 # Supporting functions
+#
+
 # Return contents following a given command
 def extract_message(command, text):
     cmd_loc = text.find(command)
@@ -610,49 +617,6 @@ def get_case_details(case_number):
     else:
         response.raise_for_status()
 
-# Get case title from CASE API
-def get_case_title(case_number):
-    access_token = get_access_token()
-
-    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
-    headers = {
-        'authorization': "Bearer " + access_token,
-        'cache-control': "no-cache"
-    }
-    response = requests.request("GET", url, headers=headers)
-
-    if (response.status_code == 200):
-        # Uncomment to debug
-        # sys.stderr.write(response.text)
-
-        # Check if case was found
-        if response.json()['RESPONSE']['COUNT'] == 1:
-            title = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
-            return title
-        else:
-            return False
-
-# Get case problem description from CASE API
-def get_case_description(case_number):
-    access_token = get_access_token()
-
-    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
-    headers = {
-        'authorization': "Bearer " + access_token,
-        'cache-control': "no-cache"
-    }
-    response = requests.request("GET", url, headers=headers)
-
-    if (response.status_code == 200):
-        # Uncomment to debug
-        # sys.stderr.write(response.text)
-
-        # Check if case was found
-        if response.json()['RESPONSE']['COUNT'] == 1:
-            title = response.json()['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
-            return title
-        else:
-            return False
 
 # Get all rooms name matching case number
 def get_rooms(case_number):
@@ -671,6 +635,7 @@ def get_rooms(case_number):
         return test
     else:
         response.raise_for_status()
+
 
 # Get Spark room name
 def get_room_name(room_id):
@@ -691,6 +656,7 @@ def get_room_name(room_id):
     else:
         response.raise_for_status()
 
+
 # Match case number in string
 def get_case_number(content):
     # Check if there is a case number in the incoming message content
@@ -702,6 +668,7 @@ def get_case_number(content):
         return case_number
     else:
         return False
+
 
 # Create Spark Room
 def create_room(case_number):
@@ -724,6 +691,7 @@ def create_room(case_number):
         return response.json()['id']
     else:
         response.raise_for_status()
+
 
 # Get room membership
 def get_membership(room_id):
@@ -790,6 +758,7 @@ def create_membership(person_id, new_room_id):
         return response.json()['id']
     else:
         response.raise_for_status()
+
 
 # Check if room already exists for case and  user
 def room_exists_for_user(case_number, email):
