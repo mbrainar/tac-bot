@@ -2,6 +2,12 @@ build:
   image: python:2
   commands:
     - echo "Building data service."
+  run_tests:
+        image: python:2-alpine
+        commands:
+            - pip install -r requirements.txt
+            - python testing.py
+
 
 publish:
   docker:
