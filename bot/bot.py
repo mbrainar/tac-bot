@@ -58,13 +58,14 @@ app = Flask(__name__)
 # ToDos:
     # todo last modified (calculate duration)
     # todo create date (calculate duration)
-    # todo contact name/email/phone
     # todo RMAs
     # todo device serial
     # todo invite cse to room
-    # todo severity
-    # todo case status
+    # todo invite by email
     # todo last note created with "action plan" or "next steps" in note detail
+    # todo feedback
+    # todo add RMA API functions
+    # todo monitor case and alert on changes
 
 
 # The list of commands the bot listens for
@@ -77,6 +78,7 @@ commands = {
     "/contract": "Get contract number associated with the case number provided, if none provided will look in the room name.",
     "/customer": "Get customer contact info for the TAC case number provided, if none provided will look in room name.",
     "/status": "Get status and severity for the TAC case number provided, if none provided will look in the room name",
+    "/rma": "Get list of RMAs associated with TAC case number provided, if none provided will look in the room name",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
 	"/test": "Print test message."
@@ -295,6 +297,8 @@ def process_incoming_message(post_data):
         reply = send_customer(post_data)
     elif command in ["/status"]:
         reply = send_status(post_data)
+    elif command in ["/rma"]:
+        reply = send_rma_numbers(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -542,6 +546,48 @@ def send_status(post_data):
     case_status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
     case_severity = case_details['RESPONSE']['CASES']['CASE_DETAIL']['SEVERITY']
     message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
+    return message
+
+
+# Returns the RMA numbers if any are associated with the case
+def send_rma_numbers(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/rma", message_in.text)
+
+    # Check if case number is found in message content
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if not case_details:
+            message = "No case was found for SR " + str(case_number)
+            return message
+    else:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if not case_details:
+                message = "No case was found for SR " + str(case_number)
+                return message
+        else:
+            message = "Sorry, no case number was found."
+            return message
+
+    # Get the contract from the case details
+    if case_details['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']:
+        case_rmas = case_details['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']['ID']
+        if type(case_rmas) is list:
+            message = "The RMAs for SR {} are: {}".format(case_number, case_rmas)
+        else:
+            message = "The RMA for SR {} is: {}".format(case_number, case_rmas)
+    else:
+        message = "There are no RMAs for SR {}".format(case_number)
+
     return message
 
 
