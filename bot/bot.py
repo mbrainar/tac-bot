@@ -62,6 +62,7 @@ app = Flask(__name__)
     # todo device serial
     # todo invite cse to room
     # todo invite by email
+    # todo start PSTS engagement
     # todo last note created with "action plan" or "next steps" in note detail
     # todo feedback
     # todo add RMA API functions
@@ -72,13 +73,13 @@ app = Flask(__name__)
 # Each key in the dictionary is a command
 # The value is the help message sent for the command
 commands = {
-    "/title": "Get title for TAC case number provided, if none provided will look in room name.",
-    "/description": "Get problem description for the TAC case number provided, if none provided will look in the room name.",
-    "/owner": "Get case owner for TAC case number provided, if none provided will look in room name.",
-    "/contract": "Get contract number associated with the case number provided, if none provided will look in the room name.",
-    "/customer": "Get customer contact info for the TAC case number provided, if none provided will look in room name.",
-    "/status": "Get status and severity for the TAC case number provided, if none provided will look in the room name",
-    "/rma": "Get list of RMAs associated with TAC case number provided, if none provided will look in the room name",
+    "/title": "Get title for TAC case.",
+    "/description": "Get problem description for the TAC case.",
+    "/owner": "Get case owner (TAC CSE) for TAC case.",
+    "/contract": "Get contract number associated with the TAC case.",
+    "/customer": "Get customer contact info for the TAC case.",
+    "/status": "Get status and severity for the TAC case.",
+    "/rma": "Get list of RMAs associated with TAC case.",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
 	"/test": "Print test message."
@@ -601,7 +602,9 @@ def send_echo(incoming):
 # Construct a help message for users.
 def send_help(post_data):
     message = "Hello!  "
-    message = message + "I understand the following commands:  \n"
+    message = message + "I understand the following commands.  \n"
+    message = message + "If case number is provided with the command, I will use that case number. \
+                        If none is provided, I will look in the Spark room name for a case number to use. \n"
     for c in commands.items():
         message = message + "* **%s**: %s \n" % (c[0], c[1])
     return message
