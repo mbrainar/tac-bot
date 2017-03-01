@@ -52,7 +52,7 @@ TAC Bot has an API that can be used to create a room for a TAC case and invite a
 # Be sure to replace <CASE#> and <EMAIL> with real values
 http://imapex-tac-bot-mbrainar.green.browndogtech.com/create/<CASE#>/<EMAIL>
 ```
-The plan is to use this API to automatically create these cases by sending an emails to an email service that will call this API. The project for the email service can be found at [github.com/imapex/tac-email](http://github.com/imapex/tac-email).
+The plan is to use this API to automatically create these cases by sending an emails to an email service that will call this API. The project for the email service can be found at [github.com/imapex/tacbot-email](http://github.com/imapex/tacbot-email).
 
 # Contribute
 
