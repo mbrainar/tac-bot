@@ -80,6 +80,7 @@ commands = {
     "/customer": "Get customer contact info for the TAC case.",
     "/status": "Get status and severity for the TAC case.",
     "/rma": "Get list of RMAs associated with TAC case.",
+    "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
 	"/test": "Print test message."
@@ -300,6 +301,12 @@ def process_incoming_message(post_data):
         reply = send_status(post_data)
     elif command in ["/rma"]:
         reply = send_rma_numbers(post_data)
+    elif command in ["/feedback"]:
+        # If
+        reply = send_feedback(post_data, "reply")
+        feedback = send_feedback(post_data, "feedback")
+        feedback_room = os.environ.get("FEEDBACK_ROOM")
+        spark.messages.create(roomId=feedback_room, markdown=feedback)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -309,12 +316,37 @@ def process_incoming_message(post_data):
 # Command functions
 #
 
+# Sends feedback to Bot developers and replies with confirmation
+def send_feedback(post_data, type):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/feedback", message_in.text)
+
+    # Get personId of the person submitting feedback
+    person_id = post_data["data"]["personId"]
+
+    if type == "feedback":
+        email = get_email(person_id)
+        message = "User {} provided the following feedback:<br>{}".format(email, content)
+    elif type == "reply":
+        message = "Thank you. Your feedback has been sent to developers"
+    else:
+        message = False
+
+    return message
+
+
+
 # Returns case title for provided case number
 def send_title(post_data):
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
 
-    # Get the details about the message that was sent.
+
     message_id = post_data["data"]["id"]
     message_in = spark.messages.get(message_id)
     content = extract_message("/title", message_in.text)
@@ -778,6 +810,22 @@ def get_person_id(email):
             response.raise_for_status()
     else:
         return False
+
+
+# Get email address for provided personId
+def get_email(person_id):
+    url = "https://api.ciscospark.com/v1/people/"+person_id
+    headers = {
+        'content-type': "application/json",
+        'authorization': "Bearer " + globals()["spark_token"],
+        'cache-control': "no-cache"
+    }
+
+    response = requests.request("GET", url, headers=headers)
+    if (response.status_code == 200):
+        return response.json()['emails'][0]
+    else:
+        response.raise_for_status()
 
 
 # Check if email is syntactically correct
