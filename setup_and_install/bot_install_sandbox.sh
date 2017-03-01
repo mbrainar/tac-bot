@@ -31,6 +31,7 @@ echo
 echo "What is the token for your bot?  "
 read -s bot_token
 echo
+
 echo "You will need access to the CASE API from http://apiconsole.cisco.com"
 echo "What is the client_id for your app?"
 read client_id
@@ -38,6 +39,7 @@ echo
 echo "What is the client_secret?"
 read -s client_secret
 echo
+
 echo "Your bot will be deployed based on the 'latest' tag of Docker Container at: "
 echo "    https://hub.docker.com/r/$docker_username/$bot_name/"
 echo "Is this correct?  yes/no"

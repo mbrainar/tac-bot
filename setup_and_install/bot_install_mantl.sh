@@ -57,7 +57,7 @@ then
     exit 0
 fi
 
-cp sample_app_def.json $docker_username-$bot_name.json
+cp sample_sandbox_app_def.json $docker_username-$bot_name.json
 sed -i "" -e "s/DOCKERUSER/$docker_username/g" $docker_username-$bot_name.json
 sed -i "" -e "s/DOCKERREPO/$docker_repo/g" $docker_username-$bot_name.json
 
