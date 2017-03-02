@@ -58,8 +58,8 @@ app = Flask(__name__)
 # ToDos:
     # todo last modified (calculate duration)
     # todo create date (calculate duration)
-    # todo RMAs
     # todo device serial
+    # todo add test cases for low hanging fruit in testing.py
     # todo invite cse to room
     # todo invite by email
     # todo start PSTS engagement
@@ -343,6 +343,16 @@ def send_feedback(post_data, type):
 
 # Returns case title for provided case number
 def send_title(post_data):
+    """
+    Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
+    access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
+    """
+    # Check if user is cisco.com
+    person_id = post_data["data"]["personId"]
+    email = get_email(person_id)
+    if not check_cisco_user(email):
+        return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
 
@@ -650,6 +660,15 @@ def send_test():
 #
 # Supporting functions
 #
+
+# Check if user is cisco.com email address
+def check_cisco_user(content):
+    pattern = re.compile("^([a-zA-Z0-9_\-\.]+)@(cisco)\.(com)$")
+
+    if pattern.match(content):
+        return True
+    else:
+        return False
 
 # Return contents following a given command
 def extract_message(command, text):
