@@ -58,13 +58,14 @@ app = Flask(__name__)
 
 # ToDos:
     # todo generate links
-    # todo device serial
+    # todo break out supporting functions into utilities.py
+    # todo device info (serial & hostname)
+    # todo bugs found in case
     # todo add test cases for low hanging fruit in testing.py
     # todo invite cse to room
     # todo invite by email
     # todo start PSTS engagement
     # todo last note created with "action plan" or "next steps" in note detail
-    # todo feedback
     # todo add RMA API functions
     # todo monitor case and alert on changes
 
