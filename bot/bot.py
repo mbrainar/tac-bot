@@ -50,7 +50,7 @@ import sys
 import json
 import requests
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
@@ -82,6 +82,7 @@ commands = {
     "/status": "Get status and severity for the TAC case.",
     "/rma": "Get list of RMAs associated with TAC case.",
     "/created": "Get the date on which the TAC case was created, and calculate the open duration",
+    "/updated": "Get the date on which the TAC case was last updated, and calculate the time since last update",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
@@ -311,6 +312,8 @@ def process_incoming_message(post_data):
         spark.messages.create(roomId=feedback_room, markdown=feedback)
     elif command in ["/created"]:
         reply = send_created(post_data)
+    elif command in ["/updated"]:
+        reply = send_updated(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -698,7 +701,7 @@ def send_rma_numbers(post_data):
     return message
 
 
-# Returns case title for provided case number
+# Returns case creation date for provided case number, and if case is still open return open duration as well
 def send_created(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
@@ -749,6 +752,65 @@ def send_created(post_data):
     status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
     if status != "Closed":
         message = message + "<br>Case has been open for {}".format(time_delta)
+    return message
+
+
+# Returns case last updated date for provided case number, and if case is still open return duration since update as well
+def send_updated(post_data):
+    """
+    Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
+    access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
+    """
+    # Check if user is cisco.com
+    person_id = post_data["data"]["personId"]
+    email = get_email(person_id)
+    if not check_cisco_user(email):
+        return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/updated", message_in.text)
+
+    # Check if case number is found in message content
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if not case_details:
+            message = "No case was found for SR " + str(case_number)
+            return message
+    else:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if not case_details:
+                message = "No case was found for SR " + str(case_number)
+                return message
+        else:
+            message = "Sorry, no case number was found."
+            return message
+
+    # Get the creation datetime from the case details
+    case_update_date = case_details['RESPONSE']['CASES']['CASE_DETAIL']['UPDATED_DATE']
+    case_update_date = datetime.strptime(case_update_date, '%Y-%m-%dT%H:%M:%SZ')
+    message = "Last update for SR {} was: {}".format(case_number, case_update_date)
+
+    # Get time delta between last updated and now
+    current_time = datetime.now()
+    current_time = current_time.replace(microsecond=0)
+    time_delta = current_time - case_update_date
+    status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
+    if status == "Closed":
+        message = message + "<br>Case is closed, {} since case closure".format(time_delta)
+    else:
+        # If case hasn't been updated in 3 days, make the text bold
+        if time_delta > timedelta(3):
+            message = message + "<br><b>{} since last update</b>".format(time_delta)
+        else:
+            message = message + "<br>{} since last update".format(time_delta)
     return message
 
 
