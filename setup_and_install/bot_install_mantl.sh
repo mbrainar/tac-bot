@@ -37,6 +37,9 @@ echo
 echo "What is the token for your bot?  "
 read -s bot_token
 echo
+echo "What is the roomId of the room to which you want to have feedback sent?  "
+read feedback_room
+echo
 
 echo "You will need access to the CASE API from http://apiconsole.cisco.com"
 echo "What is the client_id for your app?"
@@ -69,6 +72,7 @@ sed -i "" -e "s/BOTTOKEN/$bot_token/g" $docker_username-$bot_name.json
 sed -i "" -e "s/APPDOMAIN/$mantl_domain/g" $docker_username-$bot_name.json
 sed -i "" -e "s/CLIENTID/$client_id/g" $docker_username-$bot_name.json
 sed -i "" -e "s/CLIENTSECRET/$client_secret/g" $docker_username-$bot_name.json
+sed -i "" -e "s/FEEDBACKROOM/$feedback_room/g" $docker_username-$bot_name.json
 
 if [ $TAG != "" ]
 then
