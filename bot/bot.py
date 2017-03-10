@@ -57,7 +57,6 @@ app = Flask(__name__)
 
 
 # ToDos:
-    # todo last modified (calculate duration)
     # todo generate links
     # todo device serial
     # todo add test cases for low hanging fruit in testing.py
