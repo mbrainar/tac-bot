@@ -50,6 +50,7 @@ import sys
 import json
 import requests
 import re
+from datetime import datetime
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
@@ -57,7 +58,7 @@ app = Flask(__name__)
 
 # ToDos:
     # todo last modified (calculate duration)
-    # todo create date (calculate duration)
+    # todo generate links
     # todo device serial
     # todo add test cases for low hanging fruit in testing.py
     # todo invite cse to room
@@ -736,9 +737,18 @@ def send_created(post_data):
             message = "Sorry, no case number was found."
             return message
 
-    # Get the title from the case details
+    # Get the creation datetime from the case details
     case_create_date = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CREATION_DATE']
+    case_create_date = datetime.strptime(case_create_date, '%Y-%m-%dT%H:%M:%SZ')
     message = "Creation date for SR {} is: {}".format(case_number, case_create_date)
+    
+    # Get time delta between creation and now; if case is still open, append with open duration
+    current_time = datetime.now()
+    current_time = current_time.replace(microsecond=0)
+    time_delta = current_time - case_create_date
+    status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
+    if status != "Closed":
+        message = message + "<br>Case has been open for {}".format(time_delta)
     return message
 
 
