@@ -51,6 +51,7 @@ import json
 import requests
 import re
 from datetime import datetime, timedelta
+from utilities import check_cisco_user
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
@@ -838,17 +839,8 @@ def send_test():
 
 
 #
-# Supporting functions
+# Supporting functions - moved to utilities.py
 #
-
-# Check if user is cisco.com email address
-def check_cisco_user(content):
-    pattern = re.compile("^([a-zA-Z0-9_\-\.]+)@(cisco)\.(com)$")
-
-    if pattern.match(content):
-        return True
-    else:
-        return False
 
 # Return contents following a given command
 def extract_message(command, text):

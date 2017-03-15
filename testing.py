@@ -1,5 +1,6 @@
 import unittest
 import bot.bot
+import bot.utilities
 
 class testcases(unittest.TestCase):
     def setUp(self):
@@ -14,11 +15,19 @@ class testcases(unittest.TestCase):
         self.assertEqual(response.status_code, 405)
 
     def test_003_is_email(self):
-        test = bot.bot.check_email_syntax("junk")
+        test = bot.bot.check_email_syntax("notanemail")
         self.assertFalse(test)
 
     def test_004_is_email(self):
-        test = bot.bot.check_email_syntax("mbrainar@cisco.com")
+        test = bot.bot.check_email_syntax("somename@cisco.com")
         self.assertTrue(test)
+
+    def test_005_is_cisco_email(self):
+        test = bot.utilities.check_cisco_user("somename@cisco.com")
+        self.assertTrue(test)
+
+    def test_006_is_cisco_email(self):
+        test = bot.utilities.check_cisco_user("somename@yahoo.com")
+        self.assertFalse(test)
 
 unittest.main()
