@@ -48,17 +48,15 @@ from ciscosparkapi import CiscoSparkAPI
 import os
 import sys
 import json
-import requests
-import re
 from datetime import datetime, timedelta
+from utilities import check_cisco_user, get_case_number, get_case_details, room_exists_for_user, create_membership, get_email, get_person_id, create_room, get_room_name, extract_message
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
 
 
 # ToDos:
-    # todo generate links
-    # todo break out supporting functions into utilities.py
+    # todo generate links to case details, RMAs, bug IDs
     # todo device info (serial & hostname)
     # todo bugs found in case
     # todo add test cases for low hanging fruit in testing.py
@@ -81,6 +79,7 @@ commands = {
     "/customer": "Get customer contact info for the TAC case.",
     "/status": "Get status and severity for the TAC case.",
     "/rma": "Get list of RMAs associated with TAC case.",
+    "/device": "Get serial number and hostname for the device on which the TAC case was opened",
     "/created": "Get the date on which the TAC case was created, and calculate the open duration",
     "/updated": "Get the date on which the TAC case was last updated, and calculate the time since last update",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
@@ -314,6 +313,8 @@ def process_incoming_message(post_data):
         reply = send_created(post_data)
     elif command in ["/updated"]:
         reply = send_updated(post_data)
+    elif command in ["/device"]:
+        reply = send_device(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -345,7 +346,6 @@ def send_feedback(post_data, type):
         message = False
 
     return message
-
 
 
 # Returns case title for provided case number
@@ -391,6 +391,63 @@ def send_title(post_data):
     case_title = case_details['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
     message = "Title for SR {} is: {}".format(case_number, case_title)
     return message
+
+
+# Returns case title for provided case number
+def send_device(post_data):
+    """
+    Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
+    access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
+    """
+    # Check if user is cisco.com
+    person_id = post_data["data"]["personId"]
+    email = get_email(person_id)
+    if not check_cisco_user(email):
+        return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/device", message_in.text)
+
+    # Check if case number is found in message content
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if case_details is None:
+            message = "No case was found for SR " + str(case_number)
+            return message
+    else:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details is None:
+                message = "No case was found for SR " + str(case_number)
+                return message
+        else:
+            message = "Sorry, no case number was found."
+            return message
+
+    # Get the title from the case details
+    device_serial = case_details['RESPONSE']['CASES']['CASE_DETAIL']['SERIAL_NUMBER']
+    try:
+        device_hostname = case_details['RESPONSE']['CASES']['CASE_DETAIL']['DEVICE_NAME']
+    except:
+        device_hostname = None
+    if device_serial:
+        message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
+    else:
+        message = "Device serial number not provided"
+    if device_hostname:
+        message = message + "<br>Device hostname is {}".format(device_hostname)
+    else:
+        message = message + "<br>Device hostname not provided"
+    return message
+
 
 
 # Returns case description for provided case number
@@ -645,7 +702,10 @@ def send_status(post_data):
     # Get the title from the case details
     case_status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
     case_severity = case_details['RESPONSE']['CASES']['CASE_DETAIL']['SEVERITY']
-    message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
+    if case_status == "Closed":
+        message = "Status for SR {} is {}".format(case_number, case_status)
+    else:
+        message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
     return message
 
 
@@ -752,6 +812,8 @@ def send_created(post_data):
     status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
     if status != "Closed":
         message = message + "<br>Case has been open for {}".format(time_delta)
+    else:
+        message = message + "<br>Case is now Closed"
     return message
 
 
@@ -804,7 +866,7 @@ def send_updated(post_data):
     time_delta = current_time - case_update_date
     status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
     if status == "Closed":
-        message = message + "<br>Case is closed, {} since case closure".format(time_delta)
+        message = message + "<br>Case is now Closed, {} since case closure".format(time_delta)
     else:
         # If case hasn't been updated in 3 days, make the text bold
         if time_delta > timedelta(3):
@@ -831,6 +893,7 @@ def send_help(post_data):
         message = message + "* **%s**: %s \n" % (c[0], c[1])
     return message
 
+
 # Test command function that prints a test string
 def send_test():
     message = "This is a test message."
@@ -838,236 +901,8 @@ def send_test():
 
 
 #
-# Supporting functions
+# Bot functions
 #
-
-# Check if user is cisco.com email address
-def check_cisco_user(content):
-    pattern = re.compile("^([a-zA-Z0-9_\-\.]+)@(cisco)\.(com)$")
-
-    if pattern.match(content):
-        return True
-    else:
-        return False
-
-# Return contents following a given command
-def extract_message(command, text):
-    cmd_loc = text.find(command)
-    message = text[cmd_loc + len(command):]
-    return message
-
-# Get access-token for Case API
-def get_access_token():
-    client_id = os.environ.get("CASE_API_CLIENT_ID")
-    client_secret = os.environ.get("CASE_API_CLIENT_SECRET")
-    grant_type = "client_credentials"
-    url = "https://cloudsso.cisco.com/as/token.oauth2"
-    payload = "client_id="+client_id+"&grant_type=client_credentials&client_secret="+client_secret
-    headers = {
-        'accept': "application/json",
-        'content-type': "application/x-www-form-urlencoded",
-        'cache-control': "no-cache"
-    }
-    response = requests.request("POST", url, data=payload, headers=headers)
-    if (response.status_code == 200):
-        return response.json()['access_token']
-    else:
-        response.raise_for_status()
-
-# Get case details from CASE API
-def get_case_details(case_number):
-    access_token = get_access_token()
-
-    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
-    headers = {
-        'authorization': "Bearer " + access_token,
-        'cache-control': "no-cache"
-    }
-    response = requests.request("GET", url, headers=headers)
-
-    if (response.status_code == 200):
-        # Uncomment to debug
-        # sys.stderr.write(response.text)
-
-        # Check if case was found
-        if response.json()['RESPONSE']['COUNT'] == 1:
-            return response.json()
-        else:
-            return False
-    else:
-        response.raise_for_status()
-
-
-# Get all rooms name matching case number
-def get_rooms(case_number):
-    url = "https://api.ciscospark.com/v1/rooms/"
-
-    headers = {
-        'content-type': "application/json",
-        'authorization': "Bearer "+globals()['spark_token'],
-        'cache-control': "no-cache"
-        }
-
-    response = requests.request("GET", url, headers=headers)
-
-    if (response.status_code == 200):
-        test = [x for x in response.json()['items'] if str(case_number) in x['title']]
-        return test
-    else:
-        response.raise_for_status()
-
-
-# Get Spark room name
-def get_room_name(room_id):
-    url = "https://api.ciscospark.com/v1/rooms/"+room_id
-
-    headers = {
-        'content-type': "application/json",
-        'authorization': "Bearer "+globals()["spark_token"],
-        'cache-control': "no-cache"
-        }
-
-    response = requests.request("GET", url, headers=headers)
-    if (response.status_code == 200):
-        if 'errors' not in response.json():
-            return response.json()['title']
-        else:
-            return False
-    else:
-        response.raise_for_status()
-
-
-# Match case number in string
-def get_case_number(content):
-    # Check if there is a case number in the incoming message content
-    pattern = re.compile("(6[0-9]{8})")
-    match = pattern.search(content)
-
-    if match:
-        case_number = match.group(0)
-        return case_number
-    else:
-        return False
-
-
-# Create Spark Room
-def create_room(case_number):
-    case_title = get_case_title(case_number)
-    if case_title:
-        data = "{ \"title\": \"SR "+case_number+": "+case_title+"\" }"
-    else:
-        data = "{ \"title\": \"SR "+case_number+"\" }"
-        
-    url = "https://api.ciscospark.com/v1/rooms"
-
-    headers = {
-        'content-type': "application/json",
-        'authorization': "Bearer "+globals()["spark_token"],
-        'cache-control': "no-cache"
-        }
-
-    response = requests.request("POST", url, headers=headers, data=data)
-    if (response.status_code == 200):
-        return response.json()['id']
-    else:
-        response.raise_for_status()
-
-
-# Get room membership
-def get_membership(room_id):
-    url = "https://api.ciscospark.com/v1/memberships?roomId="+room_id
-    headers = {
-        'content-type': "application/json",
-        'authorization': "Bearer "+globals()["spark_token"],
-        'cache-control': "no-cache"
-        }
-
-    response = requests.request("GET", url, headers=headers)
-    if (response.status_code == 200):
-        return response.json()
-    else:
-        response.raise_for_status()
-
-
-# Get person_id for email address
-def get_person_id(email):
-    if check_email_syntax(email):
-        url = "https://api.ciscospark.com/v1/people?email="+email
-        headers = {
-            'content-type': "application/json",
-            'authorization': "Bearer "+globals()["spark_token"],
-            'cache-control': "no-cache"
-            }
-    
-        response = requests.request("GET", url, headers=headers)
-        if (response.status_code == 200):
-            if response.json()['items']:
-                return response.json()['items'][0]['id']
-            else:
-                return False
-        else:
-            response.raise_for_status()
-    else:
-        return False
-
-
-# Get email address for provided personId
-def get_email(person_id):
-    url = "https://api.ciscospark.com/v1/people/"+person_id
-    headers = {
-        'content-type': "application/json",
-        'authorization': "Bearer " + globals()["spark_token"],
-        'cache-control': "no-cache"
-    }
-
-    response = requests.request("GET", url, headers=headers)
-    if (response.status_code == 200):
-        return response.json()['emails'][0]
-    else:
-        response.raise_for_status()
-
-
-# Check if email is syntactically correct
-def check_email_syntax(content):
-    pattern = re.compile("^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$")
-
-    if pattern.match(content):
-        return True
-    else:
-        return False
-
-
-# Create membership
-def create_membership(person_id, new_room_id):
-    data = "{ \"roomId\": \""+new_room_id+"\", \"personId\": \""+person_id+"\" }"
-
-    url = "https://api.ciscospark.com/v1/memberships"
-
-    headers = {
-        'content-type': "application/json",
-        'authorization': "Bearer "+globals()["spark_token"],
-        'cache-control': "no-cache"
-        }
-
-    response = requests.request("POST", url, headers=headers, data=data)
-    if (response.status_code == 200):
-        return response.json()['id']
-    else:
-        response.raise_for_status()
-
-
-# Check if room already exists for case and  user
-def room_exists_for_user(case_number, email):
-    person_id = get_person_id(email)
-    rooms = get_rooms(case_number)
-    for r in rooms:
-        room_memberships = get_membership(r['id'])
-        for m in room_memberships['items']:
-            if m['personId'] == person_id:
-                return r['id']
-            else:
-                continue
-
 
 # Setup the Spark connection and WebHook
 def spark_setup(email, token):
