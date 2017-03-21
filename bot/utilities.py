@@ -5,6 +5,11 @@ utilities.py file contains supporting functions for bot.py
 """
 
 import re
+import requests
+import os
+
+spark_token = os.environ.get("SPARK_BOT_TOKEN")
+
 
 #
 # Supporting functions
@@ -15,6 +20,7 @@ def extract_message(command, text):
     cmd_loc = text.find(command)
     message = text[cmd_loc + len(command):]
     return message
+
 
 # Check if user is cisco.com email address
 def check_cisco_user(content):
@@ -105,7 +111,7 @@ def get_rooms(case_number):
 
     headers = {
         'content-type': "application/json",
-        'authorization': "Bearer " + globals()['spark_token'],
+        'authorization': "Bearer " + spark_token,
         'cache-control': "no-cache"
     }
 
@@ -124,7 +130,7 @@ def get_room_name(room_id):
 
     headers = {
         'content-type': "application/json",
-        'authorization': "Bearer " + globals()["spark_token"],
+        'authorization': "Bearer " + spark_token,
         'cache-control': "no-cache"
     }
 
@@ -150,7 +156,7 @@ def create_room(case_number):
 
     headers = {
         'content-type': "application/json",
-        'authorization': "Bearer " + globals()["spark_token"],
+        'authorization': "Bearer " + spark_token,
         'cache-control': "no-cache"
     }
 
@@ -166,7 +172,7 @@ def get_membership(room_id):
     url = "https://api.ciscospark.com/v1/memberships?roomId=" + room_id
     headers = {
         'content-type': "application/json",
-        'authorization': "Bearer " + globals()["spark_token"],
+        'authorization': "Bearer " + spark_token,
         'cache-control': "no-cache"
     }
 
@@ -183,7 +189,7 @@ def get_person_id(email):
         url = "https://api.ciscospark.com/v1/people?email=" + email
         headers = {
             'content-type': "application/json",
-            'authorization': "Bearer " + globals()["spark_token"],
+            'authorization': "Bearer " + spark_token,
             'cache-control': "no-cache"
         }
 
@@ -204,7 +210,7 @@ def get_email(person_id):
     url = "https://api.ciscospark.com/v1/people/" + person_id
     headers = {
         'content-type': "application/json",
-        'authorization': "Bearer " + globals()["spark_token"],
+        'authorization': "Bearer " + spark_token,
         'cache-control': "no-cache"
     }
 
@@ -223,7 +229,7 @@ def create_membership(person_id, new_room_id):
 
     headers = {
         'content-type': "application/json",
-        'authorization': "Bearer " + globals()["spark_token"],
+        'authorization': "Bearer " + spark_token,
         'cache-control': "no-cache"
     }
 

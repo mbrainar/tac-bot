@@ -48,18 +48,15 @@ from ciscosparkapi import CiscoSparkAPI
 import os
 import sys
 import json
-import requests
 from datetime import datetime, timedelta
-from utilities import check_cisco_user, get_case_number, get_case_details, room_exists_for_user, \
-create_membership, get_email, get_person_id, create_room, get_room_name, extract_message
+from utilities import check_cisco_user, get_case_number, get_case_details, room_exists_for_user, create_membership, get_email, get_person_id, create_room, get_room_name, extract_message
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
 
 
 # ToDos:
-    # todo generate links
-    # todo break out supporting functions into utilities.py
+    # todo generate links to case details, RMAs, bug IDs
     # todo device info (serial & hostname)
     # todo bugs found in case
     # todo add test cases for low hanging fruit in testing.py
@@ -82,6 +79,7 @@ commands = {
     "/customer": "Get customer contact info for the TAC case.",
     "/status": "Get status and severity for the TAC case.",
     "/rma": "Get list of RMAs associated with TAC case.",
+    "/device": "Get serial number and hostname for the device on which the TAC case was opened",
     "/created": "Get the date on which the TAC case was created, and calculate the open duration",
     "/updated": "Get the date on which the TAC case was last updated, and calculate the time since last update",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
@@ -315,6 +313,8 @@ def process_incoming_message(post_data):
         reply = send_created(post_data)
     elif command in ["/updated"]:
         reply = send_updated(post_data)
+    elif command in ["/device"]:
+        reply = send_device(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -346,7 +346,6 @@ def send_feedback(post_data, type):
         message = False
 
     return message
-
 
 
 # Returns case title for provided case number
@@ -392,6 +391,63 @@ def send_title(post_data):
     case_title = case_details['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
     message = "Title for SR {} is: {}".format(case_number, case_title)
     return message
+
+
+# Returns case title for provided case number
+def send_device(post_data):
+    """
+    Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
+    access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
+    """
+    # Check if user is cisco.com
+    person_id = post_data["data"]["personId"]
+    email = get_email(person_id)
+    if not check_cisco_user(email):
+        return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/device", message_in.text)
+
+    # Check if case number is found in message content
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if case_details is None:
+            message = "No case was found for SR " + str(case_number)
+            return message
+    else:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if case_details is None:
+                message = "No case was found for SR " + str(case_number)
+                return message
+        else:
+            message = "Sorry, no case number was found."
+            return message
+
+    # Get the title from the case details
+    device_serial = case_details['RESPONSE']['CASES']['CASE_DETAIL']['SERIAL_NUMBER']
+    try:
+        device_hostname = case_details['RESPONSE']['CASES']['CASE_DETAIL']['DEVICE_NAME']
+    except:
+        device_hostname = None
+    if device_serial:
+        message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
+    else:
+        message = "Device serial number not provided"
+    if device_hostname:
+        message = message + "<br>Device hostname is {}".format(device_hostname)
+    else:
+        message = message + "<br>Device hostname not provided"
+    return message
+
 
 
 # Returns case description for provided case number
