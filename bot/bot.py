@@ -56,8 +56,6 @@ app = Flask(__name__)
 
 
 # ToDos:
-    # todo generate links to case details, RMAs, bug IDs
-    # todo bugs found in case
     # todo add test cases for low hanging fruit in testing.py
     # todo invite cse to room
     # todo invite by email
