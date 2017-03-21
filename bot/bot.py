@@ -57,7 +57,6 @@ app = Flask(__name__)
 
 # ToDos:
     # todo generate links to case details, RMAs, bug IDs
-    # todo device info (serial & hostname)
     # todo bugs found in case
     # todo add test cases for low hanging fruit in testing.py
     # todo invite cse to room
@@ -79,9 +78,11 @@ commands = {
     "/customer": "Get customer contact info for the TAC case.",
     "/status": "Get status and severity for the TAC case.",
     "/rma": "Get list of RMAs associated with TAC case.",
+    "/bug": "Get list of Bugs associated with TAC case.",
     "/device": "Get serial number and hostname for the device on which the TAC case was opened",
     "/created": "Get the date on which the TAC case was created, and calculate the open duration",
     "/updated": "Get the date on which the TAC case was last updated, and calculate the time since last update",
+    "/link": "Get link to the case in Support Case Manager",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
     "/echo": "Reply back with the same message sent.",
     "/help": "Get help.",
@@ -315,6 +316,10 @@ def process_incoming_message(post_data):
         reply = send_updated(post_data)
     elif command in ["/device"]:
         reply = send_device(post_data)
+    elif command in ["/bug"]:
+        reply = send_bug(post_data)
+    elif command in ["/link"]:
+        reply = send_link(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -346,6 +351,37 @@ def send_feedback(post_data, type):
         message = False
 
     return message
+
+
+# Sends feedback to Bot developers and replies with confirmation
+def send_link(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/link", message_in.text)
+
+    # Get personId of the person submitting feedback
+    person_id = post_data["data"]["personId"]
+
+    link_url = "https://mycase.cloudapps.cisco.com/"
+
+    # Check if case number is found in message content
+    case_number = get_case_number(content)
+    if case_number:
+        message = "{}{}".format(link_url, case_number)
+        return message
+    else:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            message = "{}{}".format(link_url, case_number)
+            return message
+        else:
+            message = "Sorry, no case number was found."
+            return message
 
 
 # Returns case title for provided case number
@@ -748,15 +784,74 @@ def send_rma_numbers(post_data):
             message = "Sorry, no case number was found."
             return message
 
-    # Get the contract from the case details
+    # Get the RMAs from the case details
+    rma_url = "http://msvodb.cloudapps.cisco.com/support/serviceordertool/orderDetails.svo?orderNumber="
     if case_details['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']:
         case_rmas = case_details['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']['ID']
         if type(case_rmas) is list:
-            message = "The RMAs for SR {} are: {}".format(case_number, case_rmas)
+            message = "The RMAs for SR {} are:\n".format(case_number)
+            for rma in case_rmas:
+                message = message + "* <a href=\"{}{}\">{}</a>\n".format(rma_url, rma, rma)
         else:
-            message = "The RMA for SR {} is: {}".format(case_number, case_rmas)
+            message = "The RMA for SR {} is: <a href=\"{}{}\">{}</a>".format(case_number, rma_url, case_rmas, case_rmas)
     else:
         message = "There are no RMAs for SR {}".format(case_number)
+
+    return message
+
+
+# Returns the Bug IDs if any are associated with the case
+def send_bug(post_data):
+    """
+    Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
+    access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
+    """
+    # Check if user is cisco.com
+    person_id = post_data["data"]["personId"]
+    email = get_email(person_id)
+    if not check_cisco_user(email):
+        return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/bug", message_in.text)
+
+    # Check if case number is found in message content
+    case_number = get_case_number(content)
+    if case_number:
+        case_details = get_case_details(case_number)
+        if not case_details:
+            message = "No case was found for SR " + str(case_number)
+            return message
+    else:
+        room_name = get_room_name(room_id)
+        case_number = get_case_number(room_name)
+        if case_number:
+            case_details = get_case_details(case_number)
+            if not case_details:
+                message = "No case was found for SR " + str(case_number)
+                return message
+        else:
+            message = "Sorry, no case number was found."
+            return message
+
+    # Get the bugs from the case details
+    bug_url = "https://bst.cloudapps.cisco.com/bugsearch/bug/"
+    if case_details['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']:
+        case_bugs = case_details['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']['ID']
+        if type(case_bugs) is list:
+            case_bugs = [str(bug) for bug in case_bugs]
+            message = "The Bug IDs for SR {} are:\n".format(case_number)
+            for bug in case_bugs:
+                message = message + "* <a href=\"{}{}\">{}</a>\n".format(bug_url, bug, bug)
+        else:
+            message = "The Bug ID for SR {} is: <a href=\"{}{}\">{}</a>".format(case_number, bug_url, case_bugs, case_bugs)
+    else:
+        message = "There are no Bug IDs for SR {}".format(case_number)
 
     return message
 
@@ -870,7 +965,7 @@ def send_updated(post_data):
     else:
         # If case hasn't been updated in 3 days, make the text bold
         if time_delta > timedelta(3):
-            message = message + "\n**{} since last update**".format(time_delta)
+            message = message + "<br>**{} since last update**".format(time_delta)
         else:
             message = message + "<br>{} since last update".format(time_delta)
     return message
