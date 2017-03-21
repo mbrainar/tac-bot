@@ -702,7 +702,10 @@ def send_status(post_data):
     # Get the title from the case details
     case_status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
     case_severity = case_details['RESPONSE']['CASES']['CASE_DETAIL']['SEVERITY']
-    message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
+    if case_status == "Closed":
+        message = "Status for SR {} is {}".format(case_number, case_status)
+    else:
+        message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
     return message
 
 
@@ -809,6 +812,8 @@ def send_created(post_data):
     status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
     if status != "Closed":
         message = message + "<br>Case has been open for {}".format(time_delta)
+    else:
+        message = message + "<br>Case is now Closed"
     return message
 
 
@@ -861,7 +866,7 @@ def send_updated(post_data):
     time_delta = current_time - case_update_date
     status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
     if status == "Closed":
-        message = message + "<br>Case is closed, {} since case closure".format(time_delta)
+        message = message + "<br>Case is now Closed, {} since case closure".format(time_delta)
     else:
         # If case hasn't been updated in 3 days, make the text bold
         if time_delta > timedelta(3):
