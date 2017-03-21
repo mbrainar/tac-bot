@@ -870,7 +870,7 @@ def send_updated(post_data):
     else:
         # If case hasn't been updated in 3 days, make the text bold
         if time_delta > timedelta(3):
-            message = message + "<br><b>{} since last update</b>".format(time_delta)
+            message = message + "\n**{} since last update**".format(time_delta)
         else:
             message = message + "<br>{} since last update".format(time_delta)
     return message
