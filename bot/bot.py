@@ -49,7 +49,7 @@ import os
 import sys
 import json
 from datetime import datetime, timedelta
-from utilities import check_cisco_user, get_case_number, get_case_details, room_exists_for_user, create_membership, get_email, get_person_id, create_room, get_room_name, extract_message
+from utilities import check_cisco_user, verify_case_number, get_case_details, room_exists_for_user, create_membership, get_email, get_person_id, create_room, get_room_name, extract_message, get_case_number
 from case import CaseDetail
 
 # Create the Flask application that provides the bot foundation
@@ -185,7 +185,7 @@ def create(provided_case_number, email):
         return "Spark Bot not ready.  "
 
     # Check if provided case number is valid
-    case_number = get_case_number(provided_case_number)
+    case_number = verify_case_number(provided_case_number)
     if case_number:
         # Get person ID for email provided
         person_id = get_person_id(email)
@@ -369,13 +369,13 @@ def send_link(post_data):
     link_url = "https://mycase.cloudapps.cisco.com/"
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         message = "{}{}".format(link_url, case_number)
         return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             message = "{}{}".format(link_url, case_number)
             return message
@@ -405,7 +405,7 @@ def send_title(post_data):
     content = extract_message("/title", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         print get_case_details(case_number)
         case_details = CaseDetail(get_case_details(case_number))
@@ -414,7 +414,7 @@ def send_title(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = CaseDetail(get_case_details(case_number))
             if not case_details:
@@ -451,7 +451,7 @@ def send_device(post_data):
     content = extract_message("/device", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         case_details = CaseDetail(get_case_details(case_number))
         if case_details is None:
@@ -459,7 +459,7 @@ def send_device(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = CaseDetail(get_case_details(case_number))
             if case_details is None:
@@ -470,8 +470,8 @@ def send_device(post_data):
             return message
 
     # Get the title from the case details
-    device_serial = case_details.serial()
-    device_hostname = case_details.hostname()
+    device_serial = case_details.serial
+    device_hostname = case_details.hostname
     if device_serial:
         message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
     else:
@@ -504,28 +504,20 @@ def send_description(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/description", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = get_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if not case_details:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if not case_details:
-                message = "No case was found for SR " + str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    # Get the cescription from the case details
-    case_description = case_details['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
-    message = "Problem description for SR {} is: <br>{}".format(case_number, case_description)
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            case_description = case.description
+            message = "Problem description for SR {} is: <br>{}".format(case_number, case_description)
+        else:
+            message = "No case data found"
+    else:
+        message = "Invalid case number"
+
     return message
 
 
@@ -550,7 +542,7 @@ def send_owner(post_data):
     content = extract_message("/owner", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         case_details = get_case_details(case_number)
         if not case_details:
@@ -558,7 +550,7 @@ def send_owner(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
             if not case_details:
@@ -598,7 +590,7 @@ def send_contract(post_data):
     content = extract_message("/contract", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         case_details = get_case_details(case_number)
         if not case_details:
@@ -606,7 +598,7 @@ def send_contract(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
             if not case_details:
@@ -644,7 +636,7 @@ def send_customer(post_data):
 
     # Check if case number is found in message content
     if content:
-        case_number = get_case_number(content)
+        case_number = verify_case_number(content)
         if case_number:
             case_details = get_case_details(case_number)
             if case_details:
@@ -657,7 +649,7 @@ def send_customer(post_data):
             case_details = False
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
             if case_details:
@@ -715,7 +707,7 @@ def send_status(post_data):
     content = extract_message("/title", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         case_details = get_case_details(case_number)
         if not case_details:
@@ -723,7 +715,7 @@ def send_status(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
             if not case_details:
@@ -764,7 +756,7 @@ def send_rma_numbers(post_data):
     content = extract_message("/rma", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         case_details = get_case_details(case_number)
         if not case_details:
@@ -772,7 +764,7 @@ def send_rma_numbers(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
             if not case_details:
@@ -819,7 +811,7 @@ def send_bug(post_data):
     content = extract_message("/bug", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         case_details = get_case_details(case_number)
         if not case_details:
@@ -827,7 +819,7 @@ def send_bug(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
             if not case_details:
@@ -875,7 +867,7 @@ def send_created(post_data):
     content = extract_message("/created", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         case_details = get_case_details(case_number)
         if not case_details:
@@ -883,7 +875,7 @@ def send_created(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
             if not case_details:
@@ -930,7 +922,7 @@ def send_updated(post_data):
     content = extract_message("/updated", message_in.text)
 
     # Check if case number is found in message content
-    case_number = get_case_number(content)
+    case_number = verify_case_number(content)
     if case_number:
         case_details = get_case_details(case_number)
         if not case_details:
@@ -938,7 +930,7 @@ def send_updated(post_data):
             return message
     else:
         room_name = get_room_name(room_id)
-        case_number = get_case_number(room_name)
+        case_number = verify_case_number(room_name)
         if case_number:
             case_details = get_case_details(case_number)
             if not case_details:

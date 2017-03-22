@@ -46,7 +46,7 @@ def check_email_syntax(content):
 
 
 # Match case number in string
-def get_case_number(content):
+def verify_case_number(content):
     # Check if there is a case number in the incoming message content
     pattern = re.compile("(6[0-9]{8})")
     match = pattern.search(content)
@@ -56,6 +56,20 @@ def get_case_number(content):
         return case_number
     else:
         return False
+
+
+# Check for case number in message content, if none check in room name
+def get_case_number(content, room_id):
+    case_number = verify_case_number(content)
+    if case_number:
+        return case_number
+    else:
+        room_name = get_room_name(room_id)
+        case_number = verify_case_number(room_name)
+        if case_number:
+            return case_number
+        else:
+            return False
 
 #
 # Case API functions

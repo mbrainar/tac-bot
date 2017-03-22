@@ -11,6 +11,7 @@ class CaseDetail(object):
     @count.setter
     def count(self, count):
         if count == 0:
+            self._json['RESPONSE']['COUNT'] = count
             raise CaseError("No case found")
         else:
             self._json['RESPONSE']['COUNT'] = count
@@ -34,6 +35,7 @@ class CaseDetail(object):
     def serial(self):
         return self._json['RESPONSE']['CASES']['CASE_DETAIL']['SERIAL_NUMBER']
 
+    @property
     def hostname(self):
         try:
             return self._json['RESPONSE']['CASES']['CASE_DETAIL']['DEVICE_NAME']
