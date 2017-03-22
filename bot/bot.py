@@ -50,6 +50,7 @@ import sys
 import json
 from datetime import datetime, timedelta
 from utilities import check_cisco_user, get_case_number, get_case_details, room_exists_for_user, create_membership, get_email, get_person_id, create_room, get_room_name, extract_message
+from case import CaseDetail
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
@@ -57,6 +58,7 @@ app = Flask(__name__)
 
 # ToDos:
     # todo add test cases for low hanging fruit in testing.py
+    # todo timezone for tac engineer
     # todo invite cse to room
     # todo invite by email
     # todo start PSTS engagement
@@ -405,7 +407,8 @@ def send_title(post_data):
     # Check if case number is found in message content
     case_number = get_case_number(content)
     if case_number:
-        case_details = get_case_details(case_number)
+        print get_case_details(case_number)
+        case_details = CaseDetail(get_case_details(case_number))
         if not case_details:
             message = "No case was found for SR " + str(case_number)
             return message
@@ -413,7 +416,7 @@ def send_title(post_data):
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
         if case_number:
-            case_details = get_case_details(case_number)
+            case_details = CaseDetail(get_case_details(case_number))
             if not case_details:
                 message = "No case was found for SR " + str(case_number)
                 return message
@@ -422,7 +425,7 @@ def send_title(post_data):
             return message
 
     # Get the title from the case details
-    case_title = case_details['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
+    case_title = case_details.title
     message = "Title for SR {} is: {}".format(case_number, case_title)
     return message
 
@@ -450,7 +453,7 @@ def send_device(post_data):
     # Check if case number is found in message content
     case_number = get_case_number(content)
     if case_number:
-        case_details = get_case_details(case_number)
+        case_details = CaseDetail(get_case_details(case_number))
         if case_details is None:
             message = "No case was found for SR " + str(case_number)
             return message
@@ -458,7 +461,7 @@ def send_device(post_data):
         room_name = get_room_name(room_id)
         case_number = get_case_number(room_name)
         if case_number:
-            case_details = get_case_details(case_number)
+            case_details = CaseDetail(get_case_details(case_number))
             if case_details is None:
                 message = "No case was found for SR " + str(case_number)
                 return message
@@ -467,11 +470,8 @@ def send_device(post_data):
             return message
 
     # Get the title from the case details
-    device_serial = case_details['RESPONSE']['CASES']['CASE_DETAIL']['SERIAL_NUMBER']
-    try:
-        device_hostname = case_details['RESPONSE']['CASES']['CASE_DETAIL']['DEVICE_NAME']
-    except:
-        device_hostname = None
+    device_serial = case_details.serial()
+    device_hostname = case_details.hostname()
     if device_serial:
         message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
     else:

@@ -7,8 +7,11 @@ utilities.py file contains supporting functions for bot.py
 import re
 import requests
 import os
+from ciscosparkapi import CiscoSparkAPI
+from case import CaseDetail
 
 spark_token = os.environ.get("SPARK_BOT_TOKEN")
+spark = CiscoSparkAPI(access_token=spark_token)
 
 
 #
@@ -93,10 +96,11 @@ def get_case_details(case_number):
         # sys.stderr.write(response.text)
 
         # Check if case was found
-        if response.json()['RESPONSE']['COUNT'] == 1:
+        return response.json()
+        '''if response.json()['RESPONSE']['COUNT'] == 1:
             return response.json()
         else:
-            return False
+            return False'''
     else:
         response.raise_for_status()
 
@@ -107,7 +111,11 @@ def get_case_details(case_number):
 
 # Get all rooms name matching case number
 def get_rooms(case_number):
-    url = "https://api.ciscospark.com/v1/rooms/"
+    rooms = spark.rooms.list()
+    matches = [x for x in rooms if str(case_number) in x.title]
+    return matches
+
+    """url = "https://api.ciscospark.com/v1/rooms/"
 
     headers = {
         'content-type': "application/json",
@@ -121,27 +129,12 @@ def get_rooms(case_number):
         test = [x for x in response.json()['items'] if str(case_number) in x['title']]
         return test
     else:
-        response.raise_for_status()
+        response.raise_for_status()"""
 
 
-# Get Spark room name
+# Get Spark room name using CiscoSparkAPI
 def get_room_name(room_id):
-    url = "https://api.ciscospark.com/v1/rooms/" + room_id
-
-    headers = {
-        'content-type': "application/json",
-        'authorization': "Bearer " + spark_token,
-        'cache-control': "no-cache"
-    }
-
-    response = requests.request("GET", url, headers=headers)
-    if (response.status_code == 200):
-        if 'errors' not in response.json():
-            return response.json()['title']
-        else:
-            return False
-    else:
-        response.raise_for_status()
+    return spark.rooms.get(room_id).title
 
 
 # Create Spark Room
@@ -245,9 +238,9 @@ def room_exists_for_user(case_number, email):
     person_id = get_person_id(email)
     rooms = get_rooms(case_number)
     for r in rooms:
-        room_memberships = get_membership(r['id'])
+        room_memberships = get_membership(r.id)
         for m in room_memberships['items']:
             if m['personId'] == person_id:
-                return r['id']
+                return r.id
             else:
                 continue
