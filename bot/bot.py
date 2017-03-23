@@ -404,29 +404,20 @@ def send_title(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/title", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
-    if case_number:
-        print get_case_details(case_number)
-        case_details = CaseDetail(get_case_details(case_number))
-        if not case_details:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = CaseDetail(get_case_details(case_number))
-            if not case_details:
-                message = "No case was found for SR " + str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    # Get the title from the case details
-    case_title = case_details.title
-    message = "Title for SR {} is: {}".format(case_number, case_title)
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            case_title = case.title
+            message = "Title for SR {} is: {}".format(case_number, case_title)
+        else:
+            message = "No case data found matching {}".format(case_number)
+    else:
+        message = "Invalid case number"
+
     return message
 
 
@@ -450,38 +441,27 @@ def send_device(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/device", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
+    # Find case number
+    case_number = get_case_number(content, room_id)
+
     if case_number:
-        case_details = CaseDetail(get_case_details(case_number))
-        if case_details is None:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = CaseDetail(get_case_details(case_number))
-            if case_details is None:
-                message = "No case was found for SR " + str(case_number)
-                return message
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get device info from case
+            device_serial = case.serial
+            device_hostname = case.hostname
+            message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
+            if device_hostname:
+                message = message + "<br>Device hostname is {}".format(device_hostname)
+            else:
+                message = message + "<br>Device hostname not provided"
         else:
-            message = "Sorry, no case number was found."
-            return message
+            message = "No case data found matching {}".format(case_number)
+    else:
+        message = "Invalid case number"
 
-    # Get the title from the case details
-    device_serial = case_details.serial
-    device_hostname = case_details.hostname
-    if device_serial:
-        message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
-    else:
-        message = "Device serial number not provided"
-    if device_hostname:
-        message = message + "<br>Device hostname is {}".format(device_hostname)
-    else:
-        message = message + "<br>Device hostname not provided"
     return message
-
 
 
 # Returns case description for provided case number
@@ -511,10 +491,11 @@ def send_description(post_data):
         # Create case object
         case = CaseDetail(get_case_details(case_number))
         if case.count > 0:
+            # Get case description
             case_description = case.description
             message = "Problem description for SR {} is: <br>{}".format(case_number, case_description)
         else:
-            message = "No case data found"
+            message = "No case data found matching {}".format(case_number)
     else:
         message = "Invalid case number"
 

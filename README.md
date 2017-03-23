@@ -35,6 +35,8 @@ You can use TAC Bot by simply inviting **tac@sparkbot.io** to your Spark room.
 
 Most commands will accept a case number following the command and will return the data for that case number. If no case number is provided, the Bot will look in the name of the Spark room to which it is a part, and will use a case number if found there.
 
+**TODO - update supported commands list**
+
 * **/title** - Get title for TAC case.
 * **/description** - Get problem description for the TAC case.
 * **/owner** - Get case owner (TAC CSE) for TAC case.

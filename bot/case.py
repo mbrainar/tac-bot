@@ -8,14 +8,6 @@ class CaseDetail(object):
     def count(self):
         return self._json['RESPONSE']['COUNT']
 
-    @count.setter
-    def count(self, count):
-        if count == 0:
-            self._json['RESPONSE']['COUNT'] = count
-            raise CaseError("No case found")
-        else:
-            self._json['RESPONSE']['COUNT'] = count
-
     @property
     def title(self):
         return self._json['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
@@ -78,13 +70,3 @@ class CaseDetail(object):
             return self._json['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']['ID']
         else:
             return None
-
-class Error(Exception):
-    pass
-
-class CaseError(Error):
-    def __init__(self, value):
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
