@@ -887,43 +887,36 @@ def send_updated(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/updated", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
+    # Find case number
+    case_number = get_case_number(content, room_id)
+
     if case_number:
-        case_details = get_case_details(case_number)
-        if not case_details:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if not case_details:
-                message = "No case was found for SR " + str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get the update datetime from the case details
+            case_update_date = case.updated
+            case_update_date = datetime.strptime(case_update_date, '%Y-%m-%dT%H:%M:%SZ')
+            message = "Last update for SR {} was: {}".format(case_number, case_update_date)
 
-    # Get the creation datetime from the case details
-    case_update_date = case_details['RESPONSE']['CASES']['CASE_DETAIL']['UPDATED_DATE']
-    case_update_date = datetime.strptime(case_update_date, '%Y-%m-%dT%H:%M:%SZ')
-    message = "Last update for SR {} was: {}".format(case_number, case_update_date)
-
-    # Get time delta between last updated and now
-    current_time = datetime.now()
-    current_time = current_time.replace(microsecond=0)
-    time_delta = current_time - case_update_date
-    status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
-    if status == "Closed":
-        message = message + "<br>Case is now Closed, {} since case closure".format(time_delta)
-    else:
-        # If case hasn't been updated in 3 days, make the text bold
-        if time_delta > timedelta(3):
-            message = message + "<br>**{} since last update**".format(time_delta)
+            # Get time delta between last updated and now
+            current_time = datetime.now()
+            current_time = current_time.replace(microsecond=0)
+            time_delta = current_time - case_update_date
+            status = case.status
+            if status == "Closed":
+                message = message + "<br>Case is now Closed, {} since case closure".format(time_delta)
+            else:
+                # If case hasn't been updated in 3 days, make the text bold
+                if time_delta > timedelta(3):
+                    message = message + "<br>**{} since last update**".format(time_delta)
+                else:
+                    message = message + "<br>{} since last update".format(time_delta)
         else:
-            message = message + "<br>{} since last update".format(time_delta)
+            message = "No case data found matching {}".format(case_number)
+    else:
+        message = "Invalid case number"
+
     return message
 
 
