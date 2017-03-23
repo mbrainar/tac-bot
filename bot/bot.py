@@ -389,12 +389,13 @@ def send_title(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-    """
+
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -555,12 +556,13 @@ def send_contract(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-    """
+
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -570,28 +572,21 @@ def send_contract(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/contract", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if not case_details:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if not case_details:
-                message = "No case was found for SR " + str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    # Get the contract from the case details
-    case_contract = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTRACT_ID']
-    message = "The contract number used to open SR {} is: {}".format(case_number, case_contract)
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get case description
+            case_contract = case.contract
+            message = "The contract number used to open SR {} is: {}".format(case_number, case_contract)
+        else:
+            message = "No case data found matching {}".format(case_number)
+    else:
+        message = "Invalid case number"
+
     return message
 
 
@@ -672,12 +667,13 @@ def send_status(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-    """
+
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -687,32 +683,25 @@ def send_status(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/title", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if not case_details:
-            message = "No case was found for SR "+str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if not case_details:
-                message = "No case was found for SR "+str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    # Get the title from the case details
-    case_status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
-    case_severity = case_details['RESPONSE']['CASES']['CASE_DETAIL']['SEVERITY']
-    if case_status == "Closed":
-        message = "Status for SR {} is {}".format(case_number, case_status)
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get case status and severity
+            case_status = case.status
+            case_severity = case.severity
+            if case_status == "Closed":
+                message = "Status for SR {} is {}".format(case_number, case_status)
+            else:
+                message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
+        else:
+            message = "No case data found matching {}".format(case_number)
     else:
-        message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
+        message = "Invalid case number"
+
     return message
 
 
@@ -776,12 +765,13 @@ def send_bug(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-    """
+
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -832,12 +822,13 @@ def send_created(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-    """
+
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -847,39 +838,32 @@ def send_created(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/created", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if not case_details:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if not case_details:
-                message = "No case was found for SR " + str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    # Get the creation datetime from the case details
-    case_create_date = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CREATION_DATE']
-    case_create_date = datetime.strptime(case_create_date, '%Y-%m-%dT%H:%M:%SZ')
-    message = "Creation date for SR {} is: {}".format(case_number, case_create_date)
-    
-    # Get time delta between creation and now; if case is still open, append with open duration
-    current_time = datetime.now()
-    current_time = current_time.replace(microsecond=0)
-    time_delta = current_time - case_create_date
-    status = case_details['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
-    if status != "Closed":
-        message = message + "<br>Case has been open for {}".format(time_delta)
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get the creation datetime from the case details
+            case_create_date = case.created
+            case_create_date = datetime.strptime(case_create_date, '%Y-%m-%dT%H:%M:%SZ')
+            message = "Creation date for SR {} is: {}".format(case_number, case_create_date)
+
+            # Get time delta between creation and now; if case is still open, append with open duration
+            current_time = datetime.now()
+            current_time = current_time.replace(microsecond=0)
+            time_delta = current_time - case_create_date
+            status = case.status
+            if status != "Closed":
+                message = message + "<br>Case has been open for {}".format(time_delta)
+            else:
+                message = message + "<br>Case is now Closed"
+        else:
+            message = "No case data found matching {}".format(case_number)
     else:
-        message = message + "<br>Case is now Closed"
+        message = "Invalid case number"
+
     return message
 
 
@@ -888,12 +872,13 @@ def send_updated(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-    """
+
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
