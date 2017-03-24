@@ -56,17 +56,14 @@ class CaseDetail(object):
 
     @property
     def rmas(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']['ID']
-
-    @rmas.setter
-    def rmas(self, rmas):
-        if self._json['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']:
+        try:
             return self._json['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']['ID']
-        else:
+        except:
             return None
 
+    @property
     def bugs(self):
-        if self._json['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']:
+        try:
             return self._json['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']['ID']
-        else:
+        except:
             return None

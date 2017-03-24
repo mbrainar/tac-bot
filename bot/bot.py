@@ -725,37 +725,32 @@ def send_rma_numbers(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/rma", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if not case_details:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if not case_details:
-                message = "No case was found for SR " + str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    # Get the RMAs from the case details
+    # Define URL for RMA lookup link
     rma_url = "http://msvodb.cloudapps.cisco.com/support/serviceordertool/orderDetails.svo?orderNumber="
-    if case_details['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']:
-        case_rmas = case_details['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']['ID']
-        if type(case_rmas) is list:
-            message = "The RMAs for SR {} are:\n".format(case_number)
-            for rma in case_rmas:
-                message = message + "* <a href=\"{}{}\">{}</a>\n".format(rma_url, rma, rma)
+
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get RMAs from case
+            rmas = case.rmas
+            if rmas is not None:
+                if type(rmas) is list:
+                    message = "The RMAs for SR {} are:\n".format(case_number)
+                    for r in rmas:
+                        message = message + "* <a href=\"{}{}\">{}</a>\n".format(rma_url, r, r)
+                else:
+                    message = "The RMA for SR {} is: <a href=\"{}{}\">{}</a>".format(case_number, rma_url, rmas,
+                                                                                     rmas)
+            else:
+                message = "There are no RMAs for SR {}".format(case_number)
         else:
-            message = "The RMA for SR {} is: <a href=\"{}{}\">{}</a>".format(case_number, rma_url, case_rmas, case_rmas)
+            message = "No case data found matching {}".format(case_number)
     else:
-        message = "There are no RMAs for SR {}".format(case_number)
+        message = "Invalid case number"
 
     return message
 
@@ -781,38 +776,32 @@ def send_bug(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/bug", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if not case_details:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if not case_details:
-                message = "No case was found for SR " + str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    # Get the bugs from the case details
+    # Define URL for RMA lookup link
     bug_url = "https://bst.cloudapps.cisco.com/bugsearch/bug/"
-    if case_details['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']:
-        case_bugs = case_details['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']['ID']
-        if type(case_bugs) is list:
-            case_bugs = [str(bug) for bug in case_bugs]
-            message = "The Bug IDs for SR {} are:\n".format(case_number)
-            for bug in case_bugs:
-                message = message + "* <a href=\"{}{}\">{}</a>\n".format(bug_url, bug, bug)
+
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get Bugs from case
+            bugs = case.bugs
+            if bugs is not None:
+                if type(bugs) is list:
+                    message = "The Bugs for SR {} are:\n".format(case_number)
+                    for b in bugs:
+                        message = message + "* <a href=\"{}{}\">{}</a>\n".format(bug_url, b, b)
+                else:
+                    message = "The Bug for SR {} is: <a href=\"{}{}\">{}</a>".format(case_number, bug_url, bugs,
+                                                                                     bugs)
+            else:
+                message = "There are no Bugs for SR {}".format(case_number)
         else:
-            message = "The Bug ID for SR {} is: <a href=\"{}{}\">{}</a>".format(case_number, bug_url, case_bugs, case_bugs)
+            message = "No case data found matching {}".format(case_number)
     else:
-        message = "There are no Bug IDs for SR {}".format(case_number)
+        message = "Invalid case number"
 
     return message
 
