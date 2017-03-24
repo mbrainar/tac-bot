@@ -86,9 +86,9 @@ commands = {
     "/updated": "Get the date on which the TAC case was last updated, and calculate the time since last update",
     "/link": "Get link to the case in Support Case Manager",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
-    "/echo": "Reply back with the same message sent.",
-    "/help": "Get help.",
-	"/test": "Print test message."
+    # "/echo": "Reply back with the same message sent.",
+    # "/test": "Print test message.",
+    "/help": "Get help."
 }
 
 
@@ -288,10 +288,10 @@ def process_incoming_message(post_data):
     # If no command found, send help
     if command in ["", "/help"]:
         reply = send_help(post_data)
-    elif command in ["/echo"]:
-        reply = send_echo(message)
-    elif command in ["/test"]:
-        reply = send_test()
+    # elif command in ["/echo"]:
+        # reply = send_echo(message)
+    # elif command in ["/test"]:
+        # reply = send_test()
     elif command in ["/title"]:
         reply = send_title(post_data)
     elif command in ["/owner"]:
@@ -307,7 +307,7 @@ def process_incoming_message(post_data):
     elif command in ["/rma"]:
         reply = send_rma_numbers(post_data)
     elif command in ["/feedback"]:
-        # If
+        # If feedback is blank, dont send it
         feedback = send_feedback(post_data, "feedback")
         feedback_room = os.environ.get("FEEDBACK_ROOM")
         if feedback is not None:
