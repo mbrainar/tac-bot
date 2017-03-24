@@ -57,6 +57,8 @@ app = Flask(__name__)
 
 
 # ToDos:
+    # todo prevent user from sending blank feedback
+    # todo closed cases can be closed.*
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
     # todo add security check to match domain of user to case contact
