@@ -59,6 +59,7 @@ app = Flask(__name__)
 # ToDos:
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
+    # todo add security check to match domain of user to case contact
     # todo invite cse to room
     # todo invite by email
     # todo start PSTS engagement
@@ -368,20 +369,15 @@ def send_link(post_data):
 
     link_url = "https://mycase.cloudapps.cisco.com/"
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
+    # Find case number
+    case_number = get_case_number(content, room_id)
+
     if case_number:
         message = "{}{}".format(link_url, case_number)
-        return message
     else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            message = "{}{}".format(link_url, case_number)
-            return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+        message = "Invalid case number"
+
+    return message
 
 
 # Returns case title for provided case number
@@ -389,13 +385,12 @@ def send_title(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-
+    """
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
-    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -556,13 +551,12 @@ def send_contract(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-
+    """
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
-    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -667,13 +661,12 @@ def send_status(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-
+    """
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
-    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -760,13 +753,12 @@ def send_bug(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-
+    """
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
-    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -811,13 +803,12 @@ def send_created(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-
+    """
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
-    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
@@ -861,13 +852,12 @@ def send_updated(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
     access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
-
+    """
     # Check if user is cisco.com
     person_id = post_data["data"]["personId"]
     email = get_email(person_id)
     if not check_cisco_user(email):
         return "Sorry, CASE API access is limited to Cisco Employees for the time being"
-    """
 
     # Determine the Spark Room to send reply to
     room_id = post_data["data"]["roomId"]
