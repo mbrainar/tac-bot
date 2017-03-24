@@ -57,7 +57,6 @@ app = Flask(__name__)
 
 
 # ToDos:
-    # todo prevent user from sending blank feedback
     # todo closed cases can be closed.*
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
@@ -309,10 +308,13 @@ def process_incoming_message(post_data):
         reply = send_rma_numbers(post_data)
     elif command in ["/feedback"]:
         # If
-        reply = send_feedback(post_data, "reply")
         feedback = send_feedback(post_data, "feedback")
         feedback_room = os.environ.get("FEEDBACK_ROOM")
-        spark.messages.create(roomId=feedback_room, markdown=feedback)
+        if feedback is not None:
+            spark.messages.create(roomId=feedback_room, markdown=feedback)
+            reply = send_feedback(post_data, "reply")
+        else:
+            reply = "Sorry, cannot submit blank feedback"
     elif command in ["/created"]:
         reply = send_created(post_data)
     elif command in ["/updated"]:
@@ -347,11 +349,14 @@ def send_feedback(post_data, type):
 
     if type == "feedback":
         email = get_email(person_id)
-        message = "User {} provided the following feedback:<br>{}".format(email, content)
+        if content:
+            message = "User {} provided the following feedback:<br>{}".format(email, content)
+        else:
+            message = None
     elif type == "reply":
         message = "Thank you. Your feedback has been sent to developers"
     else:
-        message = False
+        message = None
 
     return message
 
