@@ -209,7 +209,7 @@ def create(provided_case_number, email):
                 membership_id = create_membership(person_id, room_id)
                 membership_message = email+" added to the room.\n"
                 sys.stderr.write(membership_message)
-                sys.stderr.write("membershipId: "+membership_id)
+                sys.stderr.write("membershipId: "+membership_id+"\n")
                 message = message+membership_message
         
             # Print Welcome message to room
