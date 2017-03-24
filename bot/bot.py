@@ -518,31 +518,25 @@ def send_owner(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/owner", message_in.text)
 
-    # Check if case number is found in message content
-    case_number = verify_case_number(content)
-    if case_number:
-        case_details = get_case_details(case_number)
-        if not case_details:
-            message = "No case was found for SR " + str(case_number)
-            return message
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if not case_details:
-                message = "No case was found for SR " + str(case_number)
-                return message
-        else:
-            message = "Sorry, no case number was found."
-            return message
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    #Get the owner from the case details
-    case_owner_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
-    case_owner_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
-    case_owner_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
-    case_owner_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
-    message = "Case owner for SR {} is: {} {} ({})". format(case_number, case_owner_first, case_owner_last, case_owner_email)
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get owner info from case
+            owner_id = case.owner_id
+            owner_first = case.owner_first
+            owner_last = case.owner_last
+            owner_email = case.owner_email
+
+            message = "Case owner for SR {} is: {} {} ({})".format(case_number, owner_first, owner_last, owner_email)
+        else:
+            message = "No case data found matching {}".format(case_number)
+    else:
+        message = "Invalid case number"
+
     return message
 
 
@@ -604,55 +598,31 @@ def send_customer(post_data):
     message_in = spark.messages.get(message_id)
     content = extract_message("/customer", message_in.text)
 
-    # Check if case number is found in message content
-    if content:
-        case_number = verify_case_number(content)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if case_details:
-                message = "Customer contact for SR "+str(case_number)+" is: <br>"
-            else:
-                message = "No case was found for SR " + str(case_number)
-                case_details = False
-        else:
-            message = "No valid case number provided."
-            case_details = False
-    else:
-        room_name = get_room_name(room_id)
-        case_number = verify_case_number(room_name)
-        if case_number:
-            case_details = get_case_details(case_number)
-            if case_details:
-                message = "Customer contact for SR "+str(case_number)+" is: <br>"
-            else:
-                message = "No case was found for SR " + str(case_number)
-                case_details = False
-        else:
-            message = "Sorry, no case number was found."
-            case_details = False
+    # Find case number
+    case_number = get_case_number(content, room_id)
 
-    #Get the customer info from case details
-    if case_details:
-        case_customer_id = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_ID']
-        case_customer_first = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_FIRST_NAME']
-        case_customer_last = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_LAST_NAME']
-        if case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_EMAIL_IDS']:
-            case_customer_email = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_EMAIL_IDS']['ID']
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get owner info from case
+            customer_id = case.customer_id
+            customer_first = case.customer_first
+            customer_last = case.customer_last
+            customer_email = case.customer_email
+            customer_business = case.customer_business
+            customer_mobile = case.customer_mobile
+
+            message = "Customer contact for SR {} is: **{} {}**".format(case_number, customer_first, customer_last)
+            message = message + "<br>CCO ID: {}".format(customer_id)
+            message = message + "<br>Email: {}".format(customer_email) if customer_email else message
+            message = message + "<br>Business phone: {}".format(customer_business) if customer_business else message
+            message = message + "<br>Mobile phone: {}".format(customer_mobile) if customer_mobile else message
         else:
-            case_customer_email = False
-        if case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_BUSINESS_PHONE_NUMBERS']:
-            case_customer_business = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_BUSINESS_PHONE_NUMBERS']['ID']
-        else:
-            case_customer_business = False
-        if case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_MOBILE_PHONE_NUMBERS']:
-            case_customer_mobile = case_details['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_MOBILE_PHONE_NUMBERS']['ID']
-        else:
-            case_customer_mobile = False
-        message = message+case_customer_first+" "+case_customer_last
-        message = message+"<br>CCO ID: "+case_customer_id if case_customer_id else message
-        message = message+"<br>Email: "+case_customer_email if case_customer_email else message
-        message = message+"<br>Business phone: "+case_customer_business if case_customer_business else message
-        message = message+"<br>Mobile phone: "+case_customer_mobile if case_customer_mobile else message
+            message = "No case data found matching {}".format(case_number)
+    else:
+        message = "Invalid case number"
+
     return message
 
 

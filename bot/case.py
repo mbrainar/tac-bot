@@ -67,3 +67,56 @@ class CaseDetail(object):
             return self._json['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']['ID']
         except:
             return None
+
+    @property
+    def owner_first(self):
+        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
+
+    @property
+    def owner_last(self):
+        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
+
+    @property
+    def owner_id(self):
+        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
+
+    @property
+    def owner_email(self):
+        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
+
+    @property
+    def customer_first(self):
+        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_FIRST_NAME']
+
+    @property
+    def customer_last(self):
+        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_LAST_NAME']
+
+    @property
+    def customer_first(self):
+        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_FIRST_NAME']
+
+    @property
+    def customer_id(self):
+        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_ID']
+
+    @property
+    def customer_email(self):
+        try:
+            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_EMAIL_IDS']['ID']
+        except:
+            return None
+
+    @property
+    def customer_business(self):
+        try:
+            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_BUSINESS_PHONE_NUMBERS']['ID']
+        except:
+            return None
+
+    @property
+    def customer_mobile(self):
+        try:
+            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_MOBILE_PHONE_NUMBERS']['ID']
+        except:
+            return None
