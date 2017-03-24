@@ -454,7 +454,10 @@ def send_device(post_data):
             # Get device info from case
             device_serial = case.serial
             device_hostname = case.hostname
-            message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
+            if device_serial:
+                message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
+            else:
+                message = "Device serial number for SR {} is not provided".format(case_number)
             if device_hostname:
                 message = message + "<br>Device hostname is {}".format(device_hostname)
             else:

@@ -25,7 +25,10 @@ class CaseDetail(object):
 
     @property
     def serial(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['SERIAL_NUMBER']
+        try:
+            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['SERIAL_NUMBER']
+        except:
+            return None
 
     @property
     def hostname(self):
