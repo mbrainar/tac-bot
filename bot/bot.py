@@ -49,7 +49,9 @@ import os
 import sys
 import json
 from datetime import datetime, timedelta
-from utilities import check_cisco_user, verify_case_number, get_case_details, room_exists_for_user, create_membership, get_email, get_person_id, create_room, get_room_name, extract_message, get_case_number
+from utilities import check_cisco_user, verify_case_number, get_case_details, room_exists_for_user, create_membership, \
+                        get_email, get_person_id, create_room, get_room_name, extract_message, get_case_number, \
+                        invite_user, check_email_syntax
 from case import CaseDetail
 
 # Create the Flask application that provides the bot foundation
@@ -84,6 +86,7 @@ commands = {
     "/device": "Get serial number and hostname for the device on which the TAC case was opened",
     "/created": "Get the date on which the TAC case was created, and calculate the open duration",
     "/updated": "Get the date on which the TAC case was last updated, and calculate the time since last update",
+    "/invite": "Invite new user to room by email (or keywords: cse=case owner)",
     "/link": "Get link to the case in Support Case Manager",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
     # "/echo": "Reply back with the same message sent.",
@@ -325,6 +328,8 @@ def process_incoming_message(post_data):
         reply = send_bug(post_data)
     elif command in ["/link"]:
         reply = send_link(post_data)
+    elif command in ["/invite"]:
+        reply = send_invite(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -875,6 +880,44 @@ def send_updated(post_data):
             message = "No case data found matching {}".format(case_number)
     else:
         message = "Invalid case number"
+
+    return message
+
+
+# Invite user by email or keyword
+def send_invite(post_data):
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/invite ", message_in.text)
+
+    # Check for keywords
+    if content == "cse" or content == "CSE":
+        case_number = get_case_number(content, room_id)
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            owner_email = case.owner_email
+            owner_first = case.owner_first
+            owner_last = case.owner_last
+            new_membership = invite_user(room_id, owner_email)
+            if new_membership:
+                message = "Case owner {} {} has been added to the room".format(owner_first, owner_last)
+            else:
+                message = "Unable to add Case owner to the room at this time"
+        else:
+            message = "Unable to add Case owner to the room at this time"
+    else:
+        email = check_email_syntax(content)
+        if email:
+            new_membership = invite_user(room_id, content)
+            if new_membership:
+                message = "User {} has been added to the room".format(content)
+            else:
+                message = "Unable to add user {} to the room".format(content)
+        else:
+            message = "Error, not a valid email address"
 
     return message
 

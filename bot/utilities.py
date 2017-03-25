@@ -191,3 +191,9 @@ def room_exists_for_user(case_number, email):
                 return r.id
             else:
                 continue
+
+
+# Invite user to room
+def invite_user(room_id, email):
+    new_membership = spark.memberships.create(room_id, personEmail=email)
+    return new_membership
