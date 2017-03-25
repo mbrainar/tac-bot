@@ -29,23 +29,30 @@ What is it NOT intended to do?
 
 You can use TAC Bot by simply inviting **tac@sparkbot.io** to your Spark room.
 
-**TODO - create link to launch web.ciscospark.com and invite bot... /hello api?**
+Or you can start a conversation with TAC bot by accessing the following URL. 
+```
+# Remember to replace <EMAIL> with your email address
+http://imapex-tac-bot-mbrainar.green.browndogtech.com/hello/<EMAIL>
+```
 
 ### Commands supported today
 
 Most commands will accept a case number following the command and will return the data for that case number. If no case number is provided, the Bot will look in the name of the Spark room to which it is a part, and will use a case number if found there.
 
-**TODO - update supported commands list**
-
-* **/title** - Get title for TAC case.
-* **/description** - Get problem description for the TAC case.
-* **/owner** - Get case owner (TAC CSE) for TAC case.
-* **/contract** - Get contract number associated with the TAC case.
-* **/customer** - Get customer contact info for the TAC case.
-* **/status** - Get status and severity for the TAC case.
-* **/rma** - Get list of RMAs associated with TAC case.
-* **/echo** - Reply back with the same message sent.
-* **/help** - Get help.
+* **/title:** Get title for TAC case.
+* **/description:** Get problem description for the TAC case.
+* **/owner:** Get case owner (TAC CSE) for TAC case.
+* **/contract:** Get contract number associated with the TAC case.
+* **/customer:** Get customer contact info for the TAC case.
+* **/status:** Get status and severity for the TAC case.
+* **/rma:** Get list of RMAs associated with TAC case.
+* **/bug:** Get list of Bugs associated with TAC case.
+* **/device:** Get serial number and hostname for the device on which the TAC case was opened
+* **/created:** Get the date on which the TAC case was created, and calculate the open duration
+* **/updated:** Get the date on which the TAC case was last updated, and calculate the time since last update
+* **/link:** Get link to the case in Support Case Manager
+* **/feedback:** Sends feedback to development team; use this to submit feature requests and bugs
+* **/help:** Get help.
 
 ### Automated room creation
 
