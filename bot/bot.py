@@ -59,7 +59,6 @@ app = Flask(__name__)
 
 
 # ToDos:
-    # todo closed cases can be closed.*
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
     # todo add security check to match domain of user to case contact
@@ -180,8 +179,8 @@ def health_check():
 @app.route("/create/<provided_case_number>/<email>", methods=["GET"])
 def create(provided_case_number, email):
     """
-    Kickoff a 1 on 1 chat with a given email
-    :param email:
+    Start new room for case number and user
+    :param provided_case_number, email:
     :return:
     """
     # Check if the Spark connection has been made
@@ -229,6 +228,17 @@ def create(provided_case_number, email):
         sys.stderr.write(message)
     
     return message
+
+
+# Room counter - returns the number of rooms for which TAC bot is a member
+# Useful for tracking utilization of TAC bot
+@app.route("/rooms", methods=["GET"])
+def room_count():
+    """
+    Notify if bot is up
+    :return:
+    """
+    return "{}\n".format(sum(1 for x in spark.rooms.list()))
 
 
 # Function to Setup the WebHook for the bot
@@ -671,7 +681,7 @@ def send_status(post_data):
             # Get case status and severity
             case_status = case.status
             case_severity = case.severity
-            if case_status == "Closed":
+            if "Closed" in case_status:
                 message = "Status for SR {} is {}".format(case_number, case_status)
             else:
                 message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
@@ -820,7 +830,7 @@ def send_created(post_data):
             current_time = current_time.replace(microsecond=0)
             time_delta = current_time - case_create_date
             status = case.status
-            if status != "Closed":
+            if "Closed" not in status:
                 message = message + "<br>Case has been open for {}".format(time_delta)
             else:
                 message = message + "<br>Case is now Closed"
@@ -868,7 +878,7 @@ def send_updated(post_data):
             current_time = current_time.replace(microsecond=0)
             time_delta = current_time - case_update_date
             status = case.status
-            if status == "Closed":
+            if "Closed" in status:
                 message = message + "<br>Case is now Closed, {} since case closure".format(time_delta)
             else:
                 # If case hasn't been updated in 3 days, make the text bold

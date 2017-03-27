@@ -119,7 +119,7 @@ def get_case_details(case_number):
 #
 
 # Get all rooms name matching case number
-def get_rooms(case_number):
+def get_matching_rooms(case_number):
     rooms = spark.rooms.list()
     matches = [x for x in rooms if str(case_number) in x.title]
     return matches
@@ -183,7 +183,7 @@ def create_membership(person_id, new_room_id):
 # Check if room already exists for case and  user
 def room_exists_for_user(case_number, email):
     person_id = get_person_id(email)
-    rooms = get_rooms(case_number)
+    rooms = get_matching_rooms(case_number)
     for r in rooms:
         room_memberships = get_membership(r.id)
         for m in room_memberships:
