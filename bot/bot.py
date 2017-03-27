@@ -180,8 +180,8 @@ def health_check():
 @app.route("/create/<provided_case_number>/<email>", methods=["GET"])
 def create(provided_case_number, email):
     """
-    Kickoff a 1 on 1 chat with a given email
-    :param email:
+    Start new room for case number and user
+    :param provided_case_number, email:
     :return:
     """
     # Check if the Spark connection has been made
@@ -229,6 +229,17 @@ def create(provided_case_number, email):
         sys.stderr.write(message)
     
     return message
+
+
+# Room counter - returns the number of rooms for which TAC bot is a member
+# Useful for tracking utilization of TAC bot
+@app.route("/rooms", methods=["GET"])
+def room_count():
+    """
+    Notify if bot is up
+    :return:
+    """
+    return "{}\n".format(sum(1 for x in spark.rooms.list()))
 
 
 # Function to Setup the WebHook for the bot
