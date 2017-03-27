@@ -59,7 +59,6 @@ app = Flask(__name__)
 
 
 # ToDos:
-    # todo closed cases can be closed.*
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
     # todo add security check to match domain of user to case contact
@@ -682,7 +681,7 @@ def send_status(post_data):
             # Get case status and severity
             case_status = case.status
             case_severity = case.severity
-            if case_status == "Closed":
+            if "Closed" in case_status:
                 message = "Status for SR {} is {}".format(case_number, case_status)
             else:
                 message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
@@ -831,7 +830,7 @@ def send_created(post_data):
             current_time = current_time.replace(microsecond=0)
             time_delta = current_time - case_create_date
             status = case.status
-            if status != "Closed":
+            if "Closed" not in status:
                 message = message + "<br>Case has been open for {}".format(time_delta)
             else:
                 message = message + "<br>Case is now Closed"
@@ -879,7 +878,7 @@ def send_updated(post_data):
             current_time = current_time.replace(microsecond=0)
             time_delta = current_time - case_update_date
             status = case.status
-            if status == "Closed":
+            if "Closed" in status:
                 message = message + "<br>Case is now Closed, {} since case closure".format(time_delta)
             else:
                 # If case hasn't been updated in 3 days, make the text bold
