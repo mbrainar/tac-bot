@@ -59,11 +59,11 @@ app = Flask(__name__)
 
 
 # ToDos:
+    # todo add debug output to stderr
+    # todo accept multiple case numbers, loop through cases?
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
     # todo add security check to match domain of user to case contact
-    # todo invite cse to room
-    # todo invite by email
     # todo start PSTS engagement
     # todo last note created with "action plan" or "next steps" in note detail
     # todo add RMA API functions
