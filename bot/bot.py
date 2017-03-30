@@ -59,11 +59,10 @@ app = Flask(__name__)
 
 
 # ToDos:
+    # todo add debug commands to stderr
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
     # todo add security check to match domain of user to case contact
-    # todo invite cse to room
-    # todo invite by email
     # todo start PSTS engagement
     # todo last note created with "action plan" or "next steps" in note detail
     # todo add RMA API functions
@@ -207,14 +206,14 @@ def create(provided_case_number, email):
                 room_id = create_room(case_number)
                 message = "Created roomId: "+room_id+"\n"
                 sys.stderr.write(message)
-        
+
                 # Add user to the room
                 membership_id = create_membership(person_id, room_id)
                 membership_message = email+" added to the room.\n"
                 sys.stderr.write(membership_message)
                 sys.stderr.write("membershipId: "+membership_id+"\n")
                 message = message+membership_message
-        
+
             # Print Welcome message to room
             spark.messages.create(roomId=room_id, markdown=send_help(False))
             welcome_message = "Welcome message (with help command) sent to the room.\n"
@@ -223,10 +222,10 @@ def create(provided_case_number, email):
         else:
             message = "No user found with the email address: "+email
             sys.stderr.write(message)
-    else: 
+    else:
         message = provided_case_number+" is not a valid case number"
         sys.stderr.write(message)
-    
+
     return message
 
 
