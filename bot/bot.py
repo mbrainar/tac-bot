@@ -284,7 +284,7 @@ def process_incoming_message(post_data):
         return ""
 
     # Log details on message
-    sys.stderr.write("Message from: " + message.personEmail + "\n")
+    sys.stderr.write("Message from {}: {}\n".format(message.personEmail, message.text))
 
     # Find the command that was sent, if any
     command = ""
@@ -300,24 +300,32 @@ def process_incoming_message(post_data):
     # If no command found, send help
     if command in ["", "/help"]:
         reply = send_help(post_data)
+        sys.stderr.write("Sent help message")
     # elif command in ["/echo"]:
         # reply = send_echo(message)
     # elif command in ["/test"]:
         # reply = send_test()
     elif command in ["/title"]:
         reply = send_title(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/owner"]:
         reply = send_owner(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/description"]:
         reply = send_description(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/contract"]:
         reply = send_contract(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/customer"]:
         reply = send_customer(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/status"]:
         reply = send_status(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/rma"]:
         reply = send_rma_numbers(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/feedback"]:
         # If feedback is blank, dont send it
         feedback = send_feedback(post_data, "feedback")
@@ -329,12 +337,16 @@ def process_incoming_message(post_data):
             reply = "Sorry, cannot submit blank feedback"
     elif command in ["/created"]:
         reply = send_created(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/updated"]:
         reply = send_updated(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/device"]:
         reply = send_device(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/bug"]:
         reply = send_bug(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/link"]:
         reply = send_link(post_data)
     elif command in ["/invite"]:
