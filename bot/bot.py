@@ -400,13 +400,15 @@ def send_link(post_data):
     # Get personId of the person submitting feedback
     person_id = post_data["data"]["personId"]
 
-    link_url = "https://mycase.cloudapps.cisco.com/"
+    external_link_url = "https://mycase.cloudapps.cisco.com/"
+    internal_link_url = "http://mwz.cisco.com/"
 
     # Find case number
     case_number = get_case_number(content, room_id)
 
     if case_number:
-        message = "{}{}".format(link_url, case_number)
+        message = "* Externally accessible link: {}{}\n".format(external_link_url, case_number)
+        message = message + "* Internal link: {}{}".format(internal_link_url, case_number)
     else:
         message = "Invalid case number"
 
