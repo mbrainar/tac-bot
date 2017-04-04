@@ -59,7 +59,7 @@ app = Flask(__name__)
 
 
 # ToDos:
-    # todo add debug commands to stderr
+    # todo accept multiple case numbers, loop through cases?
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
     # todo add security check to match domain of user to case contact
