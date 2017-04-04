@@ -59,7 +59,6 @@ app = Flask(__name__)
 
 
 # ToDos:
-    # todo add debug output to stderr
     # todo accept multiple case numbers, loop through cases?
     # todo add test cases for low hanging fruit in testing.py
     # todo timezone for tac engineer
@@ -207,14 +206,14 @@ def create(provided_case_number, email):
                 room_id = create_room(case_number)
                 message = "Created roomId: "+room_id+"\n"
                 sys.stderr.write(message)
-        
+
                 # Add user to the room
                 membership_id = create_membership(person_id, room_id)
                 membership_message = email+" added to the room.\n"
                 sys.stderr.write(membership_message)
                 sys.stderr.write("membershipId: "+membership_id+"\n")
                 message = message+membership_message
-        
+
             # Print Welcome message to room
             spark.messages.create(roomId=room_id, markdown=send_help(False))
             welcome_message = "Welcome message (with help command) sent to the room.\n"
@@ -223,10 +222,10 @@ def create(provided_case_number, email):
         else:
             message = "No user found with the email address: "+email
             sys.stderr.write(message)
-    else: 
+    else:
         message = provided_case_number+" is not a valid case number"
         sys.stderr.write(message)
-    
+
     return message
 
 
@@ -285,7 +284,7 @@ def process_incoming_message(post_data):
         return ""
 
     # Log details on message
-    sys.stderr.write("Message from: " + message.personEmail + "\n")
+    sys.stderr.write("Message from {}: {}\n".format(message.personEmail, message.text))
 
     # Find the command that was sent, if any
     command = ""
@@ -301,24 +300,32 @@ def process_incoming_message(post_data):
     # If no command found, send help
     if command in ["", "/help"]:
         reply = send_help(post_data)
+        sys.stderr.write("Sent help message")
     # elif command in ["/echo"]:
         # reply = send_echo(message)
     # elif command in ["/test"]:
         # reply = send_test()
     elif command in ["/title"]:
         reply = send_title(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/owner"]:
         reply = send_owner(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/description"]:
         reply = send_description(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/contract"]:
         reply = send_contract(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/customer"]:
         reply = send_customer(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/status"]:
         reply = send_status(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/rma"]:
         reply = send_rma_numbers(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/feedback"]:
         # If feedback is blank, dont send it
         feedback = send_feedback(post_data, "feedback")
@@ -330,12 +337,16 @@ def process_incoming_message(post_data):
             reply = "Sorry, cannot submit blank feedback"
     elif command in ["/created"]:
         reply = send_created(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/updated"]:
         reply = send_updated(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/device"]:
         reply = send_device(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/bug"]:
         reply = send_bug(post_data)
+        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/link"]:
         reply = send_link(post_data)
     elif command in ["/invite"]:
@@ -389,13 +400,15 @@ def send_link(post_data):
     # Get personId of the person submitting feedback
     person_id = post_data["data"]["personId"]
 
-    link_url = "https://mycase.cloudapps.cisco.com/"
+    external_link_url = "https://mycase.cloudapps.cisco.com/"
+    internal_link_url = "http://mwz.cisco.com/"
 
     # Find case number
     case_number = get_case_number(content, room_id)
 
     if case_number:
-        message = "{}{}".format(link_url, case_number)
+        message = "* Externally accessible link: {}{}\n".format(external_link_url, case_number)
+        message = message + "* Internal link: {}{}".format(internal_link_url, case_number)
     else:
         message = "Invalid case number"
 
