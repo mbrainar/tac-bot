@@ -2,7 +2,7 @@
 
 ## Description
 
-TAC Bot is a Spark Bot [ciscospark.com](http://www.ciscospark.com). Spark is a business messaging platform that supports persistent chat, voice and video calling, file sharing, and virtual whiteboards. The Spark platform is open and extensible through a rich set of APIs which the any Spark Bot, like *TAC Bot*, will use a webhook to receive all messages sent to the Bot, and will "listen" for a specific set of command words. When a command is received, it will perform an action basec on the command.  Any other message sent to the bot will result in the help message being sent back. 
+TAC Bot is a Spark Bot [ciscospark.com](http://www.ciscospark.com). Spark is a business messaging platform that supports persistent chat, voice and video calling, file sharing, and virtual whiteboards. The Spark platform is open and extensible through a rich set of APIs which the any Spark Bot, like *TAC Bot*, will use a webhook to receive all messages sent to the Bot, and will "listen" for a specific set of command words. When a command is received, it will perform an action basec on the command.  Any other message sent to the bot will result in the help message being sent back.
 
 It is intended to facilitate communications related to Cisco [TAC](http://www.cisco.com/go/tac) case management, including escalations communications, progress updates, next steps. It is not intended to replace traditional TAC tools such as email, file publishing, BE escalation requests, etc, but to enhance communications between TAC engineers, escalation teams, sales engineers, and the customer.
 
@@ -35,7 +35,7 @@ You can use TAC Bot by simply inviting **tac@sparkbot.io** to your Spark room.
 Or you can start a conversation with TAC bot by accessing the following URL.
 ```
 # Remember to replace <EMAIL> with your email address
-http://imapex-tac-bot-mbrainar.green.browndogtech.com/hello/<EMAIL>
+http://tac-bot.apps.imapex.io/hello/<EMAIL>
 ```
 
 ### Commands supported today
@@ -62,7 +62,7 @@ Most commands will accept a case number following the command and will return th
 TAC Bot has an API that can be used to create a room for a TAC case and invite a user. To use this API, create an HTTP GET call to the URL of the Bot for example:
 ```
 # Be sure to replace <CASE#> and <EMAIL> with real values
-http://imapex-tac-bot-mbrainar.green.browndogtech.com/create/<CASE#>/<EMAIL>
+http://tac-bot.apps.imapex.io/create/<CASE#>/<EMAIL>
 ```
 The plan is to use this API to automatically create these cases by sending an emails to an email service that will call this API. The project for the email service can be found at [github.com/imapex/tacbot-email](http://github.com/imapex/tacbot-email).
 
