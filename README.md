@@ -14,22 +14,25 @@ What is it intended to do?
     * Advanced Services HTOMs & NCEs
     * PSTS (Post Sales Technical Support) Engineers
     * Customers
-* Reduce case-related email clutter 
-* Shorten case duration through enhanced communication 
+* Reduce case-related email clutter
+* Shorten case duration through enhanced communication
 * Increase customer satisfaction through enhanced communication and shorter case durations
 
 What is it NOT intended to do?
 * NOT intended to be a replacement for existing TAC tools:
     * Logged email communications
     * File publishing tools
-    * BE escalation procedures 
+    * BE escalation procedures
 * NOT intended to be used to store customer-sensitive case data/configs
+
+## Demo
+[![TAC Bot demo](readme_resources/demo_video_thumbnail.jpg)](https://youtu.be/61D02aYOP1U)
 
 ## How to use
 
 You can use TAC Bot by simply inviting **tac@sparkbot.io** to your Spark room.
 
-Or you can start a conversation with TAC bot by accessing the following URL. 
+Or you can start a conversation with TAC bot by accessing the following URL.
 ```
 # Remember to replace <EMAIL> with your email address
 http://imapex-tac-bot-mbrainar.green.browndogtech.com/hello/<EMAIL>
@@ -56,7 +59,7 @@ Most commands will accept a case number following the command and will return th
 
 ### Automated room creation
 
-TAC Bot has an API that can be used to create a room for a TAC case and invite a user. To use this API, create an HTTP GET call to the URL of the Bot for example: 
+TAC Bot has an API that can be used to create a room for a TAC case and invite a user. To use this API, create an HTTP GET call to the URL of the Bot for example:
 ```
 # Be sure to replace <CASE#> and <EMAIL> with real values
 http://imapex-tac-bot-mbrainar.green.browndogtech.com/create/<CASE#>/<EMAIL>
@@ -67,7 +70,7 @@ The plan is to use this API to automatically create these cases by sending an em
 
 If you wish to contribute to TAC Bot, the instructions below should help to get a Bot running so that you can code, test and contribute.
 
-## Create your Bot 
+## Create your Bot
 You need to create a new Bot App account to use for your testing. Here are the basic instructions.  
 
 1.  Log into [developer.ciscospark.com](https://developer.ciscospark.com) with your own personal Spark account.  
@@ -76,15 +79,15 @@ You need to create a new Bot App account to use for your testing. Here are the b
 	![](readme_resources/spark_myapps1.jpg)
 	---
 	![](readme_resources/spark_newapp1.jpg)
-	
+
 3. Provide a *Display Name*, *Bot Username*, and *Icon* URL for your new bot.  The *Bot Username* needs to be unique within Spark, and can **NOT** be changed.  Click **Add Bot**
 
 	![](readme_resources/spark_newbot1.jpg)
-	
+
 4. Record the *Access token* that is displayed on the next page, and **Save Changes**.  If you do NOT copy the token, you can regenerate it.  
 
 	![](readme_resources/spark_newbot2.jpg)
-	
+
 5. Also note the **Bot Username** that is displayed.  This is the ***Bot Email*** that will be needed when setting up your boilerplate code.  
 
 ## CASE API Access
@@ -93,36 +96,36 @@ You will need to gain access to the Case API through [apiconsole.cisco.com](http
 
 1. Log in to [apiconsole.cisco.com](http://apiconsole.cisco.com).
 2. Click on **My APIs** in the top menu. Find **Case API 1.0** in the list and click on the **Register** button on the right.
-    
+
     ![](readme_resources/case_api_my_apis.jpg)
 
     If you do not see Case API 1.0 listed in your "My APIs", you will need to email [ssapi-pilot-help@external.cisco.com](mailto:ssapi-pilot-help@external.cisco.com) to request access to the API.
 3. Provide an *App Name*, *Description* is optional, and select *Client Credentials* under OAuth2.0 Credentials.
-    
+
     ![](readme_resources/case_api_name_credentials.jpg)
-    
+
     Ensure that *Case API 1.0* is selected in the list of available APIs to which this app requires access.
-    
+
     ![](readme_resources/case_api_select_apis.jpg)
-    
+
     Check the *I agree to the terms of service* and click **Register**
-4. Record the *Client ID* and *Client Secret* for your app. You will need these in the deployment process later. 
+4. Record the *Client ID* and *Client Secret* for your app. You will need these in the deployment process later.
 
     ![](readme_resources/case_api_client_id_secret.jpg)
 
 ## GitHub and Local Repository Setup
 
 1. Fork the repo
-    
+
     [https://github.com/imapex/tac-bot#fork-destination-box](https://github.com/imapex/tac-bot#fork-destination-box)
-    
+
 2. Clone the repo
-    
+
     ```
     #Replace <NAME> with your data
     git clone https://github.com/<GITHUB REPO>.git
     ```
-    
+
 ## Build and Push Initial Docker Image
 
 1. Build the base bot
@@ -133,19 +136,19 @@ You will need to gain access to the Case API through [apiconsole.cisco.com](http
     export BOT_REPO=<GITHUB REPO>
     export BOT_NAME=<YOUR BOT NAME>
     export DOCKER_USER=<DOCKER HUB USERNAME>
-    
-    # If you aren't in your new Git Repository directory, change into it 
+
+    # If you aren't in your new Git Repository directory, change into it
     cd $BOT_REPO
-    
+
     # Build a Docker image
     docker build -t $DOCKER_USER/$BOT_REPO:latest .
     ```
-    
+
 2. Push the image to Docker Hub
-    * You will need to have logged into Docker Hub on your workstation for this step.  If you haven't done so, you can by running: 
+    * You will need to have logged into Docker Hub on your workstation for this step.  If you haven't done so, you can by running:
 
         ```
-        docker login 
+        docker login
         ```
 
     ```
@@ -164,35 +167,35 @@ These steps will deploy your bot to the Cisco DevNet Mantl Sandbox.  This is jus
 There is another provided install script *bot_install_mantl.sh* that will let you dynamically define your mantl instance, and will also store environment variables in the JSON file that is sent to create the bot and are therefore stored in Mantl.
 
 1. Deploy your Bot.  
-    
+
     ```
-    # From the root of your project... 
-    cd setup_and_install 
-    	
+    # From the root of your project...
+    cd setup_and_install
+
     # Run the install script
-    ./bot_install_sandbox.sh 
+    ./bot_install_sandbox.sh
     ```
-    
+
     * Answer the questions asked
     * When complete, you should see a message that looks like this
 
     ```
-    Your bot is deployed to 
+    Your bot is deployed to
 
     http://<DOCKER USERNAME>-<BOT NAME>.app.mantldevnetsandbox.com/
-    
+
     You should be able to send a message to yourself from the bot by using this call
-    
+
     curl http://<DOCKER USERNAME>-<BOT NAME>.app.mantldevnetsandbox.com/hello/<YOUR EMAIL ADDRESS>
-    
-    You can also watch the progress from the GUI at: 
-    
+
+    You can also watch the progress from the GUI at:
+
     https://mantlsandbox.cisco.com/marathon
-    ``` 
-        
+    ```
+
 2. Test that your bot is working by executing the `curl` command shown in your output.  If successfully deployed, you will recieve a message in Spark from your bot.   
 3. Reply back to your bot and verify that the default commands are working.  
-    * `/help` - should return a help message 
+    * `/help` - should return a help message
     * `/echo Spark Bots are Awesome!` - should reply back with `Spark Bots are Awesome!`
 
 4. Make changes to the Bot via bot/bot.py
@@ -205,13 +208,13 @@ There is another provided install script *bot_install_mantl.sh* that will let yo
     export BOT_NAME=<YOUR BOT NAME>
     export DOCKER_USER=<DOCKER HUB USERNAME>
 
-    
+
     # Build a Docker image
     docker build -t $DOCKER_USER/$BOT_REPO:latest .
     docker push $DOCKER_USER/$BOT_REPO:latest
     ```
 
-6. Restart your Bot in the DevNet Sandbox.  Two options for this. 
+6. Restart your Bot in the DevNet Sandbox.  Two options for this.
     * Through the Marathon GUI
         1. Login to Marathon at [https://mantlsandbox.cisco.com/marathon/](https://mantlsandbox.cisco.com/marathon/)
             * Username/Password: admin/1vtG@lw@y
@@ -219,8 +222,8 @@ There is another provided install script *bot_install_mantl.sh* that will let yo
             ![](readme_resources/sandbox_marathon1.jpg)
         3. Click on your application, and then click **Restart**
             ![](readme_resources/sandbox_marathon2.jpg)
-        4. Wait until the new task shows as **Healthy** 
-    * Using the API 
+        4. Wait until the new task shows as **Healthy**
+    * Using the API
         1. Use this curl command to restart your application through the API.  
 
             ```
@@ -238,18 +241,18 @@ There is another provided install script *bot_install_mantl.sh* that will let yo
                 https://mantlsandbox.cisco.com/marathon/v2/apps/$DOCKER_USER/$BOT_NAME \
                 | python -m json.tool \
                 | egrep "tasksHealthy|tasksRunning|tasksStaged"
-                
+
             # Wait until output matches this (1 Healthy, 1 Running, and 0 Staged)
             "tasksHealthy": 1,
             "tasksRunning": 1,
             "tasksStaged": 0,
             ```
-            
+
 7. Reconfigure the bot with Spark Account Details
-    
+
     **If using the Cisco DevNet Sandbox (or another Mantl instance where environment variables are not being stored) then it will be necessary to reconfigure the bot with Spark Account Details**
 
-    1. Provide them via a REST API call after the bot code starts up. 
+    1. Provide them via a REST API call after the bot code starts up.
 
         ```
         # Store the application details as Variables for easier API request building
@@ -257,7 +260,7 @@ There is another provided install script *bot_install_mantl.sh* that will let yo
         export BOT_NAME=<YOUR BOT NAME>
         export SPARK_EMAIL=<SPARK BOT EMAIL>
         export SPARK_TOKEN=<SPARK BOT TOKEN>
-        
+
         curl -X POST \
             http://$DOCKER_USER-$BOT_NAME.app.mantldevnetsandbox.com/config \
             -d '{"SPARK_BOT_TOKEN": "'$SPARK_TOKEN'", "SPARK_BOT_EMAIL": "'$SPARK_EMAIL'"}'         
@@ -270,9 +273,9 @@ There is another provided install script *bot_install_mantl.sh* that will let yo
         cd setup_and_install
         ./bot_config.sh
         ```
-        
+
         Completed Configuration script message example:
-        
+
         ```
         Checking if Bot is up
         HTTP Status: 200
@@ -286,11 +289,11 @@ There is another provided install script *bot_install_mantl.sh* that will let yo
 
 The bot is designed to be deployed as a Docker Container, and can run on any platform supporting Docker Containers.  
 
-**NOTE:** For full functionality, this bot needs to be installed in an environment where the bot application is available on the public internet in order for the Spark Cloud to be able to send WebHooks to the bot.  If you do NOT have an environment to use, the DevNet Sandbox Mantl cluster can be leveraged to host your bot. 
+**NOTE:** For full functionality, this bot needs to be installed in an environment where the bot application is available on the public internet in order for the Spark Cloud to be able to send WebHooks to the bot.  If you do NOT have an environment to use, the DevNet Sandbox Mantl cluster can be leveraged to host your bot.
 
 Alternatively, you can use something like [ngrok](http://ngrock.com) to create a secure tunnel to your development environment. This service will give you a publicly accessible URL that you can use as the **SPARK_BOT_URL** parameter.  
 
-#### Running Python Code Locally 
+#### Running Python Code Locally
 
 There are several pieces of information needed to run this application.  These details are provided Environment Variables to the application.
 **Be sure to use valid details for the environment variables**
@@ -311,7 +314,7 @@ python bot/bot.py
 
 ```
 
-#### Locally building and running the Docker Container 
+#### Locally building and running the Docker Container
 
 There are several pieces of information needed to run this application.  These details are provided Environment Variables to the application.
 **Be sure to use valid details for the environment variables**
@@ -360,5 +363,3 @@ For instance, after installing coverage.py, the toolkit can be run with the comm
 and an HTML report of the code coverage can be generated with the command::
 
     coverage html
-
-
