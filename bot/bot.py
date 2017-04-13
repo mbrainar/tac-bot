@@ -781,6 +781,7 @@ def send_bug(post_data):
 
     # Define URL for RMA lookup link
     bug_url = "https://bst.cloudapps.cisco.com/bugsearch/bug/"
+    internal_bug_url = "http://cdets.cisco.com/apps/dumpcr?&content=summary&format=html&identifier="
 
     if case_number:
         # Create case object
@@ -792,10 +793,9 @@ def send_bug(post_data):
                 if type(bugs) is list:
                     message = "The Bugs for SR {} are:\n".format(case_number)
                     for b in bugs:
-                        message = message + "* <a href=\"{}{}\">{}</a>\n".format(bug_url, b, b)
+                        message = message + "* {} (<a href=\"{}{}\">external</a> | <a href=\"{}{}\">internal</a>)\n".format(b,bug_url, b, internal_bug_url, b)
                 else:
-                    message = "The Bug for SR {} is: <a href=\"{}{}\">{}</a>".format(case_number, bug_url, bugs,
-                                                                                     bugs)
+                    message = "The Bug for SR {} is: {} (<a href=\"{}{}\">external</a> | <a href=\"{}{}\">internal</a>)".format(case_number, bugs, bug_url, bugs, internal_bug_url, bugs)
             else:
                 message = "There are no Bugs for SR {}".format(case_number)
         else:
