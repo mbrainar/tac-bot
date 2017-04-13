@@ -38,6 +38,8 @@ Or you can start a conversation with TAC bot by accessing the following URL.
 http://tac-bot.apps.imapex.io/hello/<EMAIL>
 ```
 
+**Note:** Due to the potentially sensitive nature of the data contained in a TAC case, TAC bot will only respond to requests for TAC case data if the request originates from a Cisco employee with a cisco.com email address. 
+
 ### Commands supported today
 
 Most commands will accept a case number following the command and will return the data for that case number. If no case number is provided, the Bot will look in the name of the Spark room to which it is a part, and will use a case number if found there.
