@@ -123,3 +123,39 @@ class CaseDetail(object):
             return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_MOBILE_PHONE_NUMBERS']['ID']
         except:
             return None
+
+    # List all notes in the case
+    def notes(self):
+        items = self._json['RESPONSE']['CASES']['CASE_DETAIL']['NOTES']['XXCTS_SCM_APIX_NOTE']
+        for item in items:
+            yield Note(item)
+
+    @property
+    def last_note(self):
+        old_list = self._json['RESPONSE']['CASES']['CASE_DETAIL']['NOTES']['XXCTS_SCM_APIX_NOTE']
+        new_list = sorted(old_list, key=lambda k: k['CREATION_DATE'])
+        return new_list[-1]
+
+    # get last note
+    # get note by date
+    # get note by user
+
+class Note(object):
+    def __init__(self, json):
+        self._json = json
+
+    @property
+    def creator(self):
+        return self._json['CREATED_BY']
+
+    @property
+    def note(self):
+        return self._json['NOTE']
+
+    @property
+    def creation_date(self):
+        return self._json['CREATION_DATE']
+
+    @property
+    def updated_date(self):
+        return self._json['UPDATED_DATE']

@@ -52,7 +52,7 @@ from datetime import datetime, timedelta
 from utilities import check_cisco_user, verify_case_number, get_case_details, room_exists_for_user, create_membership, \
                         get_email, get_person_id, create_room, get_room_name, extract_message, get_case_number, \
                         invite_user, check_email_syntax
-from case import CaseDetail
+from case import CaseDetail, Note
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
@@ -87,6 +87,7 @@ commands = {
     "/invite": "Invite new user to room by email (or keywords: cse=case owner)",
     "/link": "Get link to the case in Support Case Manager",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
+    "/last-note": "Sends the contents of the last note attached to the case",
     # "/echo": "Reply back with the same message sent.",
     # "/test": "Print test message.",
     "/help": "Get help."
@@ -351,6 +352,8 @@ def process_incoming_message(post_data):
         reply = send_link(post_data)
     elif command in ["/invite"]:
         reply = send_invite(post_data)
+    elif command in ["/last-note"]:
+        reply = send_last_note(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -941,6 +944,46 @@ def send_invite(post_data):
                 message = "Unable to add user {} to the room".format(content)
         else:
             message = "Error, not a valid email address"
+
+    return message
+
+
+# Returns the last note attached to the case
+def send_last_note(post_data):
+    """
+    Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
+    access to Cisco employees and contractors, until such time as a more appropriate authentication method can be added
+    """
+    # Check if user is cisco.com
+    person_id = post_data["data"]["personId"]
+    email = get_email(person_id)
+    if not check_cisco_user(email):
+        return "Sorry, CASE API access is limited to Cisco Employees for the time being"
+
+    # Determine the Spark Room to send reply to
+    room_id = post_data["data"]["roomId"]
+
+    # Get the details about the message that was sent.
+    message_id = post_data["data"]["id"]
+    message_in = spark.messages.get(message_id)
+    content = extract_message("/last-note", message_in.text)
+
+    # Find case number
+    case_number = get_case_number(content, room_id)
+
+    if case_number:
+        # Create case object
+        case = CaseDetail(get_case_details(case_number))
+        if case.count > 0:
+            # Get case description
+            n = Note(case.last_note)
+            created = datetime.strptime(n.creation_date, '%Y-%m-%dT%H:%M:%SZ')
+            note = n.note
+            message = "The last note on SR {}, updated {} is: <br>{}".format(case_number, created, note)
+        else:
+            message = "No case data found matching {}".format(case_number)
+    else:
+        message = "Invalid case number"
 
     return message
 
