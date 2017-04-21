@@ -1,3 +1,5 @@
+import re
+
 # Case API wrapper class
 class CaseDetail(object):
     def __init__(self, json):
@@ -124,17 +126,22 @@ class CaseDetail(object):
         except:
             return None
 
-    # List all notes in the case
-    def notes(self):
-        items = self._json['RESPONSE']['CASES']['CASE_DETAIL']['NOTES']['XXCTS_SCM_APIX_NOTE']
-        for item in items:
-            yield Note(item)
-
     @property
     def last_note(self):
         old_list = self._json['RESPONSE']['CASES']['CASE_DETAIL']['NOTES']['XXCTS_SCM_APIX_NOTE']
         new_list = sorted(old_list, key=lambda k: k['CREATION_DATE'])
-        return new_list[-1]
+        return Note(new_list[-1])
+
+    @property
+    def action_plan(self):
+        _pattern = re.compile("action\ +plan", flags=re.IGNORECASE)
+        old_list = self._json['RESPONSE']['CASES']['CASE_DETAIL']['NOTES']['XXCTS_SCM_APIX_NOTE']
+        try:
+            new_list = [n for n in old_list if _pattern.search(n['NOTE']) or _pattern.search(n['NOTE_DETAIL'])]
+            sorted_list = sorted(new_list, key=lambda k: k['CREATION_DATE'])
+            return Note(sorted_list[-1])
+        except:
+            return None
 
     # get last note
     # get note by date
@@ -151,6 +158,10 @@ class Note(object):
     @property
     def note(self):
         return self._json['NOTE']
+
+    @property
+    def note_detail(self):
+        return self._json['NOTE_DETAIL']
 
     @property
     def creation_date(self):
