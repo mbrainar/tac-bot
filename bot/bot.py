@@ -982,6 +982,8 @@ def send_last_note(post_data):
             n = case.last_note
             created = datetime.strptime(n.creation_date, '%Y-%m-%dT%H:%M:%SZ')
             note = n.note
+            if note == "Please refer to the note detail":
+                note = n.note_detail
             message = "The last note on SR {}, updated {} is: <br>{}".format(case_number, created, note)
         else:
             message = "No case data found matching {}".format(case_number)
