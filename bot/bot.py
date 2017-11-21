@@ -407,7 +407,7 @@ def send_link(post_data):
     person_id = post_data["data"]["personId"]
 
     external_link_url = "https://mycase.cloudapps.cisco.com/"
-    internal_link_url = "http://mwz.cisco.com/"
+    internal_link_url = "http://www-tac.cisco.com/Teams/ks/c3/casekwery.php?Case="
 
     # Find case number
     case_number = get_case_number(content, room_id)

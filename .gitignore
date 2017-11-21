@@ -2,6 +2,8 @@
 .vagrant/
 drone-secret.yml
 drone-secrets.yml
+drone_secrets.yml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

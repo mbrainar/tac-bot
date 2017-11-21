@@ -46,6 +46,6 @@ deploy:
 
 notify:
   spark:
-    image: hpreston/drone-spark
+    image: hpreston/drone-spark:0.4
     auth_token: $$SPARK_TOKEN
     roomId: $$SPARK_ROOM
