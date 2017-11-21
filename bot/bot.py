@@ -108,8 +108,11 @@ def after_request(response):
 
 
 # Entry point for Spark Webhooks
-@app.route('/', methods=["POST"])
+@app.route('/', methods=["GET", "POST"])
 def process_webhook():
+    if request.method == "GET":
+        return "up"
+
     # Check if the Spark connection has been made
     if spark is None:
         sys.stderr.write("Bot not ready.  \n")
@@ -1109,4 +1112,4 @@ if __name__ == '__main__':
         spark_setup(bot_email, spark_token)
         spark = CiscoSparkAPI(access_token=spark_token)
 
-    app.run(debug=True, host='0.0.0.0', port=int("5000"))
+    app.run(debug=True, host='0.0.0.0', port=int("5001"))
