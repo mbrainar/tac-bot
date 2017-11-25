@@ -2,17 +2,10 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  annotations:
-    deployment.kubernetes.io/revision: "7"
-  creationTimestamp: 2017-11-21T15:32:48Z
-  generation: 7
   labels:
     run: tac-bot
   name: tac-bot
   namespace: default
-  resourceVersion: "17611023"
-  selfLink: /apis/extensions/v1beta1/namespaces/default/deployments/tac-bot
-  uid: 3a5faf74-ced1-11e7-baf6-42010a800024
 spec:
   replicas: 1
   selector:
@@ -25,26 +18,25 @@ spec:
     type: RollingUpdate
   template:
     metadata:
-      creationTimestamp: null
       labels:
         run: tac-bot
     spec:
       containers:
       - env:
         - name: SPARK_BOT_URL
-          value: http://tac-bot.gcp.nerfherder.io
+          value: <<enter your bot url>>
         - name: SPARK_BOT_APP_NAME
-          value: tac-bot
+          value: <<enter your bot name>>
         - name: SPARK_BOT_EMAIL
-          value: tac@sparkbot.io
+          value: <<enter your bot email>>
         - name: SPARK_BOT_TOKEN
-          value: NzA1MjE2ZTctYjk1NS00NDgxLWIxOGMtMDhjY2RiYTc1MmM2MjFmYTk3NmItYjRm
+          value: <<enter your bot spark token>>
         - name: CASE_API_CLIENT_ID
-          value: e3tehes7wawuby45de56axj5
+          value: <<enter your api client id>>
         - name: CASE_API_CLIENT_SECRET
-          value: P5kFPHV5BWnsCs7kr3h873vg
+          value: <<enter your api client secret>>
         - name: FEEDBACK_ROOM
-          value: Y2lzY29zcGFyazovL3VzL1JPT00vYzJlOTk1ZjAtNzUxNS0xMWU2LWE5ZGEtYzU3ZTUwMDI1MDMz
+          value: <<enter the room you wish to send feedback to>>
         image: docker.io/mbrainar/tac-bot:gcp
         imagePullPolicy: Always
         name: tac-bot
@@ -59,36 +51,18 @@ spec:
       schedulerName: default-scheduler
       securityContext: {}
       terminationGracePeriodSeconds: 30
-status:
-  availableReplicas: 1
-  conditions:
-  - lastTransitionTime: 2017-11-21T15:32:48Z
-    lastUpdateTime: 2017-11-21T15:32:48Z
-    message: Deployment has minimum availability.
-    reason: MinimumReplicasAvailable
-    status: "True"
-    type: Available
-  observedGeneration: 7
-  readyReplicas: 1
-  replicas: 1
-  updatedReplicas: 1
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  creationTimestamp: 2017-11-21T16:32:33Z
   labels:
     run: tac-bot
   name: tac-bot
   namespace: default
-  resourceVersion: "17094481"
-  selfLink: /api/v1/namespaces/default/services/tac-bot
-  uid: 9381e650-ced9-11e7-baf6-42010a800024
 spec:
   clusterIP: 10.11.242.135
   ports:
-  - nodePort: 32266
-    port: 5000
+  - port: 5000
     protocol: TCP
     targetPort: 5000
   selector:
@@ -101,27 +75,13 @@ status:
 apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
-  annotations:
-    ingress.kubernetes.io/backends: '{"k8s-be-30849--b145c29ddc0cdfdc":"HEALTHY","k8s-be-32266--b145c29ddc0cdfdc":"HEALTHY"}'
-    ingress.kubernetes.io/forwarding-rule: k8s-fw-default-named-ingress--b145c29ddc0cdfdc
-    ingress.kubernetes.io/target-proxy: k8s-tp-default-named-ingress--b145c29ddc0cdfdc
-    ingress.kubernetes.io/url-map: k8s-um-default-named-ingress--b145c29ddc0cdfdc
-  creationTimestamp: 2017-11-21T16:58:36Z
-  generation: 9
   name: named-ingress
   namespace: default
-  resourceVersion: "17610400"
-  selfLink: /apis/extensions/v1beta1/namespaces/default/ingresses/named-ingress
-  uid: 36f98149-cedd-11e7-baf6-42010a800024
 spec:
   rules:
-  - host: tac-bot.gcp.nerfherder.io
+  - host: <<enter your bot url>>
     http:
       paths:
       - backend:
           serviceName: tac-bot
           servicePort: 5000
-status:
-  loadBalancer:
-    ingress:
-    - ip: 35.190.36.127
