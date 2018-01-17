@@ -35,7 +35,7 @@ You can use TAC Bot by simply inviting **tac@sparkbot.io** to your Spark room.
 Or you can start a conversation with TAC bot by accessing the following URL.
 ```
 # Remember to replace <EMAIL> with your email address
-http://tac-bot.nerfherder.io/hello/<EMAIL>
+http://tac-bot.ecs.nerfherder.io/hello/<EMAIL>
 ```
 
 **Note:** Due to the potentially sensitive nature of the data contained in a TAC case, TAC bot will only respond to requests for TAC case data if the request originates from a Cisco employee with a cisco.com email address. 
@@ -64,7 +64,7 @@ Most commands will accept a case number following the command and will return th
 TAC Bot has an API that can be used to create a room for a TAC case and invite a user. To use this API, create an HTTP GET call to the URL of the Bot for example:
 ```
 # Be sure to replace <CASE#> and <EMAIL> with real values
-http://tac-bot.nerfherder.io/create/<CASE#>/<EMAIL>
+http://tac-bot.ecs.nerfherder.io/create/<CASE#>/<EMAIL>
 ```
 The plan is to use this API to automatically create these cases by sending an emails to an email service that will call this API. The project for the email service can be found at [github.com/imapex/tacbot-email](http://github.com/imapex/tacbot-email).
 
