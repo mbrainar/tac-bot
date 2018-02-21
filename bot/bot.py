@@ -656,9 +656,9 @@ def send_customer(post_data):
 
             message = "Customer contact for SR {} is: **{}**".format(case_number, customer_name)
             message = message + "<br>CCO ID: {}".format(customer_id)
-            message = message + "<br>Email: {}".format(customer_email[0]) if customer_email else message
-            message = message + "<br>Business phone: {}".format(customer_business[0]) if customer_business else message
-            message = message + "<br>Mobile phone: {}".format(customer_mobile[0]) if customer_mobile else message
+            message = message + "<br>Email: {}".format(customer_email[0]) if customer_email != "" else message
+            message = message + "<br>Business phone: {}".format(customer_business[0]) if customer_business != "" else message
+            message = message + "<br>Mobile phone: {}".format(customer_mobile[0]) if customer_mobile != "" else message
         else:
             message = "{}".format(case.error)
     else:
