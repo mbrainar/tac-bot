@@ -492,7 +492,7 @@ def send_device(post_data):
             device_serial = case.serial
             # hostname doesn't exist in case api v3
             # device_hostname = case.hostname
-            if device_serial not "":
+            if device_serial != "":
                 message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
             else:
                 message = "Device serial number for SR {} is not provided".format(case_number)
