@@ -487,20 +487,17 @@ def send_device(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get device info from case
             device_serial = case.serial
-            device_hostname = case.hostname
-            if device_serial:
+            # hostname doesn't exist in case api v3
+            # device_hostname = case.hostname
+            if device_serial not "":
                 message = "Device serial number for SR {} is: {}".format(case_number, device_serial)
             else:
                 message = "Device serial number for SR {} is not provided".format(case_number)
-            if device_hostname:
-                message = message + "<br>Device hostname is {}".format(device_hostname)
-            else:
-                message = message + "<br>Device hostname not provided"
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 

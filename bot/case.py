@@ -21,23 +21,13 @@ class CaseDetail(object):
     def title(self):
         return self._json['caseDetail']['title']
 
-    @title.setter
-    def title(self, title):
-        if isinstance(title, str):
-            self._json['RESPONSE']['CASES']['CASE_DETAIL']['TITLE'] = title
-        else:
-            raise TypeError("title must be of type str")
-
     @property
     def description(self):
         return self._json['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
 
     @property
     def serial(self):
-        try:
-            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['SERIAL_NUMBER']
-        except:
-            return None
+        return self._json['caseDetail']['serial_number']
 
     @property
     def hostname(self):

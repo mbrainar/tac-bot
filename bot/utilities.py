@@ -98,7 +98,7 @@ def get_access_token():
 def get_case_details(case_number):
     access_token = get_access_token()
 
-    url = "https://api.cisco.com/case/v1.0/cases/details/case_ids/" + str(case_number)
+    url = "https://api.cisco.com/case/v3/cases/details/case_id/" + str(case_number)
     headers = {
         'authorization': "Bearer " + access_token,
         'cache-control': "no-cache"
