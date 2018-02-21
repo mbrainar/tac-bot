@@ -75,20 +75,12 @@ class CaseDetail(object):
             return None
 
     @property
-    def owner_first(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_FIRST_NAME']
-
-    @property
-    def owner_last(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_LAST_NAME']
-
-    @property
-    def owner_id(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_USER_ID']
+    def owner_name(self):
+        return self._json['caseDetail']['owner_name']
 
     @property
     def owner_email(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['OWNER_EMAIL_ADDRESS']
+        return self._json['caseDetail']['owner_email']
 
     @property
     def customer_first(self):

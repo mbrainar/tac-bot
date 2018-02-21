@@ -568,16 +568,14 @@ def send_owner(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get owner info from case
-            owner_id = case.owner_id
-            owner_first = case.owner_first
-            owner_last = case.owner_last
+            owner_name = case.owner_name
             owner_email = case.owner_email
 
-            message = "Case owner for SR {} is: {} {} ({})".format(case_number, owner_first, owner_last, owner_email)
+            message = "Case owner for SR {} is: {} ({})".format(case_number, owner_name, owner_email)
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 
