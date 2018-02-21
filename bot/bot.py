@@ -610,12 +610,12 @@ def send_contract(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get case description
             case_contract = case.contract
             message = "The contract number used to open SR {} is: {}".format(case_number, case_contract)
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 
@@ -838,7 +838,7 @@ def send_created(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get the creation datetime from the case details
             case_create_date = case.created
             case_create_date = datetime.strptime(case_create_date, '%Y-%m-%dT%H:%M:%SZ')
@@ -854,7 +854,7 @@ def send_created(post_data):
             else:
                 message = message + "<br>Case is now Closed"
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 
@@ -886,7 +886,7 @@ def send_updated(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get the update datetime from the case details
             case_update_date = case.updated
             case_update_date = datetime.strptime(case_update_date, '%Y-%m-%dT%H:%M:%SZ')
@@ -906,7 +906,7 @@ def send_updated(post_data):
                 else:
                     message = message + "<br>{} since last update".format(time_delta)
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 

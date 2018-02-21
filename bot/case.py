@@ -21,6 +21,7 @@ class CaseDetail(object):
     def title(self):
         return self._json['caseDetail']['title']
 
+    # TODO find equivalent to problem description
     @property
     def description(self):
         return self._json['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
@@ -29,28 +30,31 @@ class CaseDetail(object):
     def serial(self):
         return self._json['caseDetail']['serial_number']
 
+    '''
+    # hostname doesn't exist in case api v3
     @property
     def hostname(self):
         try:
             return self._json['RESPONSE']['CASES']['CASE_DETAIL']['DEVICE_NAME']
         except:
             return None
+    '''
 
     @property
     def contract(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTRACT_ID']
+        return self._json['caseDetail']['contract_id']
 
     @property
     def updated(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['UPDATED_DATE']
+        return self._json['caseDetail']['updated_date']
 
     @property
     def created(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CREATION_DATE']
+        return self._json['caseDetail']['creation_date']
 
     @property
     def status(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['STATUS']
+        return self._json['caseDetail']['status']
 
     @property
     def severity(self):
