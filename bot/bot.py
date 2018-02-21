@@ -696,7 +696,7 @@ def send_status(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get case status and severity
             case_status = case.status
             case_severity = case.severity
@@ -705,7 +705,7 @@ def send_status(post_data):
             else:
                 message = "Status for SR {} is {} and Severity is {}".format(case_number, case_status, case_severity)
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 

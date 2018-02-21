@@ -58,7 +58,7 @@ class CaseDetail(object):
 
     @property
     def severity(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['SEVERITY']
+        return self._json['caseDetail']['severity']
 
     @property
     def rmas(self):
