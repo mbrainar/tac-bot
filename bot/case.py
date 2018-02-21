@@ -11,8 +11,15 @@ class CaseDetail(object):
         return self._json['RESPONSE']['COUNT']
 
     @property
+    def error(self):
+        try:
+            return self._json['caseDetail']['ErrorResponse']['APIError']['ErrorDescription']
+        except:
+            return None
+
+    @property
     def title(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['TITLE']
+        return self._json['caseDetail']['title']
 
     @title.setter
     def title(self, title):

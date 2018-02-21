@@ -450,11 +450,11 @@ def send_title(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             case_title = case.title
             message = "Title for SR {} is: {}".format(case_number, case_title)
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 
