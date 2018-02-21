@@ -646,22 +646,21 @@ def send_customer(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get owner info from case
             customer_id = case.customer_id
-            customer_first = case.customer_first
-            customer_last = case.customer_last
+            customer_name = case.customer_name
             customer_email = case.customer_email
             customer_business = case.customer_business
             customer_mobile = case.customer_mobile
 
-            message = "Customer contact for SR {} is: **{} {}**".format(case_number, customer_first, customer_last)
+            message = "Customer contact for SR {} is: **{}**".format(case_number, customer_name)
             message = message + "<br>CCO ID: {}".format(customer_id)
-            message = message + "<br>Email: {}".format(customer_email) if customer_email else message
-            message = message + "<br>Business phone: {}".format(customer_business) if customer_business else message
-            message = message + "<br>Mobile phone: {}".format(customer_mobile) if customer_mobile else message
+            message = message + "<br>Email: {}".format(customer_email[0]) if customer_email else message
+            message = message + "<br>Business phone: {}".format(customer_business[0]) if customer_business else message
+            message = message + "<br>Mobile phone: {}".format(customer_mobile[0]) if customer_mobile else message
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 

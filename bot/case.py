@@ -83,41 +83,25 @@ class CaseDetail(object):
         return self._json['caseDetail']['owner_email']
 
     @property
-    def customer_first(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_FIRST_NAME']
-
-    @property
-    def customer_last(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_LAST_NAME']
-
-    @property
-    def customer_first(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_FIRST_NAME']
+    def customer_name(self):
+        return self._json['caseDetail']['contact_name']
 
     @property
     def customer_id(self):
-        return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_USER_ID']
+        return self._json['caseDetail']['contact_user_id']
 
     @property
     def customer_email(self):
-        try:
-            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_EMAIL_IDS']['ID']
-        except:
-            return None
+        # Returns LIST of emails
+        return self._json['caseDetail']['contact_email_ids']
 
     @property
     def customer_business(self):
-        try:
-            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_BUSINESS_PHONE_NUMBERS']['ID']
-        except:
-            return None
+        return self._json['caseDetail']['contact_business_phone_numbers']
 
     @property
     def customer_mobile(self):
-        try:
-            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['CONTACT_MOBILE_PHONE_NUMBERS']['ID']
-        except:
-            return None
+        return self._json['caseDetail']['contact_mobile_phone_numbers']
 
     @property
     def last_note(self):
