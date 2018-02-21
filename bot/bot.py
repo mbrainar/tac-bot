@@ -88,7 +88,7 @@ commands = {
     "/link": "Get link to the case in Support Case Manager",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
     "/last-note": "Sends the contents of the last note attached to the case",
-    "/action-plan": "Sends the last note containing \"action plan\"",
+    # "/action-plan": "Sends the last note containing \"action plan\"",
     # "/echo": "Reply back with the same message sent.",
     # "/test": "Print test message.",
     "/help": "Get help."
@@ -358,8 +358,8 @@ def process_incoming_message(post_data):
         reply = send_invite(post_data)
     elif command in ["/last-note"]:
         reply = send_last_note(post_data)
-    elif command in ["/action-plan"]:
-        reply = send_action_plan(post_data)
+    # elif command in ["/action-plan"]:
+    #     reply = send_action_plan(post_data)
 
     # send_message_to_room(room_id, reply)
     spark.messages.create(roomId=room_id, markdown=reply)
@@ -974,16 +974,15 @@ def send_last_note(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get case description
             n = case.last_note
             created = datetime.strptime(n.creation_date, '%Y-%m-%dT%H:%M:%SZ')
-            note = n.note
-            if note == "Please refer to the note detail":
-                note = n.note_detail
+            note = n.note_detail
+            # TODO add check for note length; spark only accepts certain length
             message = "The last note on SR {}, updated {} is: <br>{}".format(case_number, created, note)
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 
@@ -991,6 +990,10 @@ def send_last_note(post_data):
 
 
 # Returns the last note attached to the case
+'''
+# action plan never really worked properly :-( 
+# Case api v3 doesn't provide enough data types to capture action plan
+# removing from new version
 def send_action_plan(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
@@ -1033,6 +1036,7 @@ def send_action_plan(post_data):
         message = "Invalid case number"
 
     return message
+'''
 
 
 # Sample command function that just echos back the sent message

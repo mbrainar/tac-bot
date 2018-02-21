@@ -105,10 +105,14 @@ class CaseDetail(object):
 
     @property
     def last_note(self):
-        old_list = self._json['RESPONSE']['CASES']['CASE_DETAIL']['NOTES']['XXCTS_SCM_APIX_NOTE']
-        new_list = sorted(old_list, key=lambda k: k['CREATION_DATE'])
+        old_list = self._json['caseDetail']['notes']
+        new_list = sorted(old_list, key=lambda k: k['creation_date'])
         return Note(new_list[-1])
 
+    '''
+    # action plan never really worked properly :-( 
+    # Case api v3 doesn't provide enough data types to capture action plan
+    # removing from new version
     @property
     def action_plan(self):
         _pattern = re.compile("action\ +plan", flags=re.IGNORECASE)
@@ -119,6 +123,7 @@ class CaseDetail(object):
             return Note(sorted_list[-1])
         except:
             return None
+    '''
 
     # get last note
     # get note by date
@@ -130,20 +135,12 @@ class Note(object):
 
     @property
     def creator(self):
-        return self._json['CREATED_BY']
-
-    @property
-    def note(self):
-        return self._json['NOTE']
+        return self._json['created_by']
 
     @property
     def note_detail(self):
-        return self._json['NOTE_DETAIL']
+        return self._json['note_detail']
 
     @property
     def creation_date(self):
-        return self._json['CREATION_DATE']
-
-    @property
-    def updated_date(self):
-        return self._json['UPDATED_DATE']
+        return self._json['creation_date']
