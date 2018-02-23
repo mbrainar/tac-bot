@@ -6,9 +6,13 @@ class CaseDetail(object):
         self._json = json
         super(CaseDetail, self).__init__()
 
+    '''
+    # Count doesn't exist in case api v3
+    # replaced with error
     @property
     def count(self):
         return self._json['RESPONSE']['COUNT']
+    '''
 
     @property
     def error(self):
@@ -21,10 +25,12 @@ class CaseDetail(object):
     def title(self):
         return self._json['caseDetail']['title']
 
-    # TODO find equivalent to problem description
+    '''
+    # Problem description doesn't exist in case api v3
     @property
     def description(self):
         return self._json['RESPONSE']['CASES']['CASE_DETAIL']['PROBLEM_DESC']
+    '''
 
     @property
     def serial(self):

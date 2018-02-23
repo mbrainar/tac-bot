@@ -74,7 +74,7 @@ app = Flask(__name__)
 # The value is the help message sent for the command
 commands = {
     "/title": "Get title for TAC case.",
-    "/description": "Get problem description for the TAC case.",
+    # "/description": "Get problem description for the TAC case.",
     "/owner": "Get case owner (TAC CSE) for TAC case.",
     "/contract": "Get contract number associated with the TAC case.",
     "/customer": "Get customer contact info for the TAC case.",
@@ -316,9 +316,9 @@ def process_incoming_message(post_data):
     elif command in ["/owner"]:
         reply = send_owner(post_data)
         sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
-    elif command in ["/description"]:
-        reply = send_description(post_data)
-        sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
+    # elif command in ["/description"]:
+    #     reply = send_description(post_data)
+    #     sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
     elif command in ["/contract"]:
         reply = send_contract(post_data)
         sys.stderr.write("Replied to {} with:\n{}\n".format(message.personEmail, reply))
@@ -505,6 +505,9 @@ def send_device(post_data):
 
 
 # Returns case description for provided case number
+'''
+# problem description doesnt exist in case api v3
+# removing from new version
 def send_description(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
@@ -540,6 +543,7 @@ def send_description(post_data):
         message = "Invalid case number"
 
     return message
+'''
 
 
 # Returns the owner of the TAC case number provided
@@ -1051,6 +1055,8 @@ def send_help(post_data):
                         If none is provided, I will look in the Spark room name for a case number to use. \n"
     for c in commands.items():
         message = message + "* **%s**: %s \n" % (c[0], c[1])
+    message = message + "\r\nTAC Bot will soon be replaced with TAC Connect Bot, which is now available for internal testing. \
+                        To begin using TAC Connect Bot, log in to https://cway.cisco.com/tac-connect"
     return message
 
 
