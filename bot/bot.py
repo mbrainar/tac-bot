@@ -835,7 +835,7 @@ def send_created(post_data):
         if not case.error:
             # Get the creation datetime from the case details
             case_create_date = case.created
-            case_create_date = datetime.strptime(case_create_date, '%Y-%m-%dT%H:%M:%SZ')
+            case_create_date = datetime.strptime(case_create_date, '%Y-%m-%dT%H:%M:%S.%fZ')
             message = "Creation date for SR {} is: {}".format(case_number, case_create_date)
 
             # Get time delta between creation and now; if case is still open, append with open duration
@@ -883,7 +883,7 @@ def send_updated(post_data):
         if not case.error:
             # Get the update datetime from the case details
             case_update_date = case.updated
-            case_update_date = datetime.strptime(case_update_date, '%Y-%m-%dT%H:%M:%SZ')
+            case_update_date = datetime.strptime(case_update_date, '%Y-%m-%dT%H:%M:%S.%fZ')
             message = "Last update for SR {} was: {}".format(case_number, case_update_date)
 
             # Get time delta between last updated and now
