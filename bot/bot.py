@@ -52,7 +52,7 @@ from datetime import datetime, timedelta
 from utilities import check_cisco_user, verify_case_number, get_case_details, room_exists_for_user, create_membership, \
                         get_email, get_person_id, create_room, get_room_name, extract_message, get_case_number, \
                         invite_user, check_email_syntax
-from case import CaseDetail, Note
+from case import CaseDetail
 
 # Create the Flask application that provides the bot foundation
 app = Flask(__name__)
@@ -87,7 +87,7 @@ commands = {
     "/invite": "Invite new user to room by email (or keywords: cse=case owner)",
     "/link": "Get link to the case in Support Case Manager",
     "/feedback": "Sends feedback to development team; use this to submit feature requests and bugs",
-    "/last-note": "Sends the contents of the last note attached to the case",
+    # "/last-note": "Sends the contents of the last note attached to the case",
     # "/action-plan": "Sends the last note containing \"action plan\"",
     # "/echo": "Reply back with the same message sent.",
     # "/test": "Print test message.",
@@ -356,8 +356,8 @@ def process_incoming_message(post_data):
         reply = send_link(post_data)
     elif command in ["/invite"]:
         reply = send_invite(post_data)
-    elif command in ["/last-note"]:
-        reply = send_last_note(post_data)
+    # elif command in ["/last-note"]:
+    #     reply = send_last_note(post_data)
     # elif command in ["/action-plan"]:
     #     reply = send_action_plan(post_data)
 
@@ -789,20 +789,17 @@ def send_bug(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get Bugs from case
             bugs = case.bugs
-            if bugs is not None:
-                if type(bugs) is list:
-                    message = "The Bugs for SR {} are:\n".format(case_number)
-                    for b in bugs:
-                        message = message + "* {} (<a href=\"{}{}\">external</a> | <a href=\"{}{}\">internal</a>)\n".format(b,bug_url, b, internal_bug_url, b)
-                else:
-                    message = "The Bug for SR {} is: {} (<a href=\"{}{}\">external</a> | <a href=\"{}{}\">internal</a>)".format(case_number, bugs, bug_url, bugs, internal_bug_url, bugs)
+            if len(bugs) > 0:
+                message = "The Bugs for SR {} are:\n".format(case_number)
+                for b in bugs:
+                    message = message + "* {} (<a href=\"{}{}\">external</a> | <a href=\"{}{}\">internal</a>)\n".format(b,bug_url, b, internal_bug_url, b)
             else:
                 message = "There are no Bugs for SR {}".format(case_number)
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 
@@ -949,6 +946,9 @@ def send_invite(post_data):
 
 
 # Returns the last note attached to the case
+'''
+# last-note in caseAPIv3 returns entire email threads and is too long for Spark
+# removing from new version
 def send_last_note(post_data):
     """
     Due to the potentially sensitive nature of TAC case data, it is necessary (for the time being) to limit CASE API
@@ -977,16 +977,17 @@ def send_last_note(post_data):
         if not case.error:
             # Get case description
             n = case.last_note
-            created = datetime.strptime(n.creation_date, '%Y-%m-%dT%H:%M:%SZ')
+            created = datetime.strptime(n.creation_date, '%Y-%m-%dT%H:%M:%S.%fZ')
             note = n.note_detail
             # TODO add check for note length; spark only accepts certain length
-            message = "The last note on SR {}, updated {} is: <br>{}".format(case_number, created, note)
+            message = "The last note on SR {}, updated {} is: <br>{}".format(case_number, created, note.encode('utf-8'))
         else:
             message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 
     return message
+'''
 
 
 # Returns the last note attached to the case

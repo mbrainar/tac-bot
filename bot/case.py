@@ -69,10 +69,7 @@ class CaseDetail(object):
 
     @property
     def bugs(self):
-        try:
-            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['BUGS']['ID']
-        except:
-            return None
+        return self._json['caseDetail']['bugs']
 
     @property
     def owner_name(self):
@@ -103,11 +100,15 @@ class CaseDetail(object):
     def customer_mobile(self):
         return self._json['caseDetail']['contact_mobile_phone_numbers']
 
+    '''
+    # last-note in caseAPIv3 returns entire email threads and is too long for Spark
+    # removing from new version
     @property
     def last_note(self):
         old_list = self._json['caseDetail']['notes']
         new_list = sorted(old_list, key=lambda k: k['creation_date'])
         return Note(new_list[-1])
+    '''
 
     '''
     # action plan never really worked properly :-( 
@@ -128,7 +129,9 @@ class CaseDetail(object):
     # get last note
     # get note by date
     # get note by user
-
+'''
+# last-note in caseAPIv3 returns entire email threads and is too long for Spark
+# removing from new version
 class Note(object):
     def __init__(self, json):
         self._json = json
@@ -144,3 +147,4 @@ class Note(object):
     @property
     def creation_date(self):
         return self._json['creation_date']
+'''
