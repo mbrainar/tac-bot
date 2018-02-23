@@ -62,10 +62,7 @@ class CaseDetail(object):
 
     @property
     def rmas(self):
-        try:
-            return self._json['RESPONSE']['CASES']['CASE_DETAIL']['RMAS']['ID']
-        except:
-            return None
+        return self._json['caseDetail']['rmas']
 
     @property
     def bugs(self):

@@ -738,21 +738,17 @@ def send_rma_numbers(post_data):
     if case_number:
         # Create case object
         case = CaseDetail(get_case_details(case_number))
-        if case.count > 0:
+        if not case.error:
             # Get RMAs from case
             rmas = case.rmas
-            if rmas is not None:
-                if type(rmas) is list:
-                    message = "The RMAs for SR {} are:\n".format(case_number)
-                    for r in rmas:
-                        message = message + "* <a href=\"{}{}\">{}</a>\n".format(rma_url, r, r)
-                else:
-                    message = "The RMA for SR {} is: <a href=\"{}{}\">{}</a>".format(case_number, rma_url, rmas,
-                                                                                     rmas)
+            if len(rmas) > 0:
+                message = "The RMAs for SR {} are:\n".format(case_number)
+                for r in rmas:
+                     message = message + "* <a href=\"{}{}\">{}</a>\n".format(rma_url, r, r)
             else:
                 message = "There are no RMAs for SR {}".format(case_number)
         else:
-            message = "No case data found matching {}".format(case_number)
+            message = "{}".format(case.error)
     else:
         message = "Invalid case number"
 
